@@ -243,7 +243,7 @@ private:
         auto& varMap = getVarMap<T>();
         auto it = varMap.find(varId);
         if (it == varMap.end()) {
-            std::cout << "ERROR: no such variable found: id = " << varId << std::endl;
+            std::cout << call_stack.back().executionPoint << ": ERROR: no such variable found: id = " << varId << std::endl;
             exit(300);
         }
         T val = it->second;
@@ -256,7 +256,7 @@ private:
         auto & varMap = getVarMap<std::string>();
         auto it = varMap.find(varId);
         if (it == varMap.end()) {
-            std::cout << "ERROR: no such variable found: id = " << varId << std::endl;
+            std::cout << call_stack.back().executionPoint <<  ": ERROR: no such variable found: id = " << varId << std::endl;
             exit(300);
         }
         uint16_t stringId = it->second;
@@ -278,7 +278,7 @@ private:
         auto& varMap = getVarMap<T>(contextId);
         auto it = varMap.find(varId);
         if (it == varMap.end()) {
-            std::cout << "ERROR: no such variable found: id = " << varId << ", context = " << contextId << std::endl;
+            std::cout << call_stack.back().executionPoint <<  ": ERROR: no such variable found: id = " << varId << ", context = " << contextId << std::endl;
             exit(300);
         }
         T val = it->second;
@@ -294,7 +294,7 @@ private:
         auto & varMap = getVarMap<std::string>(contextId);
         auto it = varMap.find(varId);
         if (it == varMap.end()) {
-            std::cout << "ERROR: no such variable found: id = " << varId << ", context = " << contextId << std::endl;
+            std::cout << call_stack.back().executionPoint <<  ": ERROR: no such variable found: id = " << varId << ", context = " << contextId << std::endl;
             exit(300);
         }
         uint16_t stringId = it->second;

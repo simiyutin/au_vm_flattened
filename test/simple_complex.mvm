@@ -39,7 +39,7 @@ function int foo(int x) {
             x += 1;
             return t + z1 + bar(z1 - y);
         }
-        if (x <= 0 || y <= 0 || z <= 0) {
+        if (x <= 0 || y <= 0 || z <= 0) { // @1:0, @2:2, @2:3
             print('baz early leave\n');
             return x + y + z;
         }
