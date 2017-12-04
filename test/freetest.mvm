@@ -1,19 +1,16 @@
-function int foo() {
-    int r = 0;
-    function int bar() {
-        function int baz() {
-            r += 1;
-            return r;
+int x = 1;
+int y = 1;
+int z = 1;
+
+
+function void foo(int a) {
+    function void bar(int b) {
+        if (b <= 0) {
+            return z;
         }
-        baz();
-        return r;
+        return foo(b - 1);
     }
-    function void boz() {
-        r += 1;
-    }
-    boz();
-    int res = bar();
-    return res - r;
+    return bar(a - 1);
 }
 
-print(foo(0));
+foo(10);
