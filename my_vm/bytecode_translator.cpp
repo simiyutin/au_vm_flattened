@@ -25,7 +25,7 @@ Status *BytecodeTranslatorImpl::translate(const string &program, Code **code) {
     Bytecode bytecode = visitor.getBytecode();
     map<string, int> topMostVars = visitor.getTopMostVars();
     vector<string> stringConstants = visitor.getStringConstants();
-    std::map<int, int> functionOffsets = visitor.getFunctionOffsetsMap();
+    std::map<uint16_t, size_t> functionOffsets = visitor.getFunctionOffsetsMap();
     (*code) = new Interpreter(bytecode, topMostVars, stringConstants, functionOffsets);
     std::ofstream ofs("lastBytecode.txt");
     (*code)->disassemble(ofs);

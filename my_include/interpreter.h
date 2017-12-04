@@ -30,7 +30,7 @@ struct Interpreter : mathvm::Code {
     Interpreter(const mathvm::Bytecode & bytecode,
              const std::map<std::string, int> & topMostVars,
              const std::vector<std::string> & stringConstants,
-             const std::map<int, int> & functionOffsets) :
+             const std::map<uint16_t, size_t> & functionOffsets) :
             bytecode(bytecode),
             topMostVars(topMostVars),
             stringConstants(stringConstants),
@@ -73,14 +73,14 @@ private:
     template <typename T>
     void handleLoad(identity<T>) {
         T val = bytecode.getTyped<T>(call_stack.back().executionPoint);
-        stack.addTyped(val);
         call_stack.back().executionPoint += sizeof(T);
+        stack.addTyped(val);
     }
 
     void handleLoad(identity<std::string>) {
         uint16_t stringTableIndex = bytecode.getInt16(call_stack.back().executionPoint);
-        stack.addUInt16(stringTableIndex);
         call_stack.back().executionPoint += sizeof(uint16_t);
+        stack.addUInt16(stringTableIndex);
     }
 
     template <typename T>
@@ -165,7 +165,7 @@ private:
 
     template <typename T>
     void handleStoreVar(identity<T>) {
-        uint16_t varId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
         T val = stack.getTyped<T>();
 //        std::cout << "--store ctx var @"
@@ -177,7 +177,7 @@ private:
     }
 
     void handleStoreVar(identity<std::string>) {
-        uint16_t varId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
         uint16_t stringId = stack.getTyped<uint16_t>();
         getVarMap<std::string>()[varId] = stringId;
@@ -190,9 +190,9 @@ private:
 
     template <typename T>
     void handleStoreCtxVar(identity<T>) {
-        uint16_t contextId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t contextId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t varId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
         T val = stack.getTyped<T>();
 //        std::cout << "--store ctx var @"
@@ -206,9 +206,9 @@ private:
     }
 
     void handleStoreCtxVar(identity<std::string>) {
-        uint16_t contextId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t contextId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t varId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
         uint16_t stringId = stack.getTyped<uint16_t>();
         getVarMap<std::string>(contextId)[varId] = stringId;
@@ -222,16 +222,28 @@ private:
 
     template <typename T>
     void handleLoadVar(identity<T>) {
-        uint16_t varId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        T val = getVarMap<T>()[varId];
+        auto& varMap = getVarMap<T>();
+        auto it = varMap.find(varId);
+        if (it == varMap.end()) {
+            std::cout << "ERROR: no such variable found: id = " << varId << std::endl;
+            exit(300);
+        }
+        T val = it->second;
         stack.addTyped(val);
     }
 
     void handleLoadVar(identity<std::string>) {
-        uint16_t varId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t stringId = getVarMap<std::string>()[varId];
+        auto & varMap = getVarMap<std::string>();
+        auto it = varMap.find(varId);
+        if (it == varMap.end()) {
+            std::cout << "ERROR: no such variable found: id = " << varId << std::endl;
+            exit(300);
+        }
+        uint16_t stringId = it->second;
         stack.addUInt16(stringId);
     }
 
@@ -242,20 +254,35 @@ private:
 
     template <typename T>
     void handleLoadCtxVar(identity<T>) {
-        uint16_t contextId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t contextId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t varId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        T val = getVarMap<T>(contextId)[varId];
+
+        auto& varMap = getVarMap<T>(contextId);
+        auto it = varMap.find(varId);
+        if (it == varMap.end()) {
+            std::cout << "ERROR: no such variable found: id = " << varId << ", context = " << contextId << std::endl;
+            exit(300);
+        }
+        T val = it->second;
         stack.addTyped(val);
     }
 
     void handleLoadCtxVar(identity<std::string>) {
-        uint16_t contextId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t contextId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t varId = bytecode.getInt16(call_stack.back().executionPoint);
+        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t stringId = getVarMap<std::string>(contextId)[varId];
+
+        auto & varMap = getVarMap<std::string>(contextId);
+        auto it = varMap.find(varId);
+        if (it == varMap.end()) {
+            std::cout << "ERROR: no such variable found: id = " << varId << ", context = " << contextId << std::endl;
+            exit(300);
+        }
+        uint16_t stringId = it->second;
+
         stack.addUInt16(stringId);
     }
 
@@ -302,6 +329,7 @@ private:
     template <typename FUNCTOR>
     void handleConditionalJump(const FUNCTOR & f) {
         int16_t shift = bytecode.getInt16(call_stack.back().executionPoint);
+
         int64_t upper = stack.getTyped<int64_t>();
         int64_t lower = stack.getTyped<int64_t>();
         if (f(upper, lower)) {
@@ -334,12 +362,14 @@ private:
 //        std::cout << "--call" << std::endl;
         uint16_t function_id = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
+        call_stack.back().stack_size = stack.length();
         if (call_stack.back().function_id != int64_t(function_id)) {
 //            std::cout << "--push context" << std::endl;
             int64_t cur_stack_frame_ind = call_stack.size() - 1;
             context_frames_indices.push_back(cur_stack_frame_ind);
         }
-        call_stack.push_back(stack_frame(functionOffsets[function_id], int64_t(function_id)));
+        size_t new_execution_point = functionOffsets.find(function_id)->second;
+        call_stack.push_back(stack_frame(new_execution_point, int64_t(function_id)));
     }
 
     void handleReturn() {
@@ -351,9 +381,16 @@ private:
 //            std::cout << "--pop context" << std::endl;
             context_frames_indices.pop_back();
         }
+
+        int64_t new_stack_size = stack.length();
+        int64_t old_stack_size = call_stack.back().stack_size;
+        if (new_stack_size > old_stack_size + sizeof(int64_t)) {
+            std::cout << "STACK SANITIZER ERROR: BEFORE: " << old_stack_size << " AFTER: " << new_stack_size
+                      << std::endl;
+            exit(300);
+        }
     }
 
-    //todo simplify - just use stack frame fields
     template <typename T>
     std::map<int, typename detail::image<T>::type> & getVarMap(uint16_t context = 0) {
         if (context_frames_indices.size() < context) {
@@ -373,7 +410,7 @@ private:
     Stack stack;
     std::map<std::string, int> topMostVars;
     std::vector<std::string> stringConstants;
-    std::map<int, int> functionOffsets;
+    const std::map<uint16_t , size_t> functionOffsets;
     std::vector<stack_frame> call_stack;
     std::vector<int> context_frames_indices;
 };

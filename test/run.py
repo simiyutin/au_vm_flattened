@@ -1,10 +1,10 @@
 #!/usr/bin/python2.7
 # coding=utf-8
 
+import optparse
+import os
 import subprocess
 import sys
-import os
-import optparse
 
 options = None
 
@@ -109,7 +109,7 @@ def main(argv):
     #ackermann_closure - 4m18.917s through time
     slow = ['fib', 'ackermann', 'ackermann_closure']
     toskip = ['complex', 'simple_complex', 'complex2', 'casts', 'function_native']
-    # if t != 'complex':
+    # if t != 'simple_complex':
     if t in slow or t in toskip:
         continue
     runTest(mvm, testdir, t, options.doublerun)

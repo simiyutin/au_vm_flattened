@@ -8,13 +8,14 @@ function int foo(int x) {
     function int bar(int a) {
         print('bar start, a=', a, '\n');
         if (a <= 0) {
+            print('bar early leave\n');
             return z;
         }
         print('calling baz, a=', a, '\n');
         x = baz();
         print('called baz, a=', a, '\n');
         r += 1;
-        print('calling bar recursively, a=', a, '\n');
+        print('calling bar recursively, a=', a, ' x=', x, 'z=', z, '\n');
         return x + bar(a - 1);
     }
     function int baz() {
@@ -54,7 +55,7 @@ function int foo(int x) {
         return bar(f - 3);
     }
     r = foo(x - 1);
-    bar(r);
+    bar(r); // when x == 1 r will be 7
     return r + baz();
 }
 
