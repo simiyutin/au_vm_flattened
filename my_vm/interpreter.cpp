@@ -121,6 +121,16 @@ Status* Interpreter::execute(vector<pVar> &vars) {
                 handleStoreCtxVar<std::string>();
                 break;
 
+            case BC_STOREDVAR0:
+                handleStoreVar0<double>();
+                break;
+            case BC_STOREIVAR0:
+                handleStoreVar0<int64_t>();
+                break;
+            case BC_STORESVAR0:
+                handleStoreVar0<std::string>();
+                break;
+
             case BC_LOADDVAR:
                 handleLoadVar<double>();
                 break;

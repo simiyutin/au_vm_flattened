@@ -10,81 +10,81 @@ void BytecodeTranslatorVisitor::visitBinaryOpNode(BinaryOpNode *node) {
         case tADD: {
             node->right()->visit(this);
             node->left()->visit(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getAddInsn(type));
-            stack.pop_back();
-            stack.pop_back();
-            stack.push_back(type);
+            typeStack.pop_back();
+            typeStack.pop_back();
+            typeStack.push_back(type);
             break;
         }
         case tSUB: {
             node->right()->visit(this);
             node->left()->visit(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getSubInsn(type));
-            stack.pop_back();
-            stack.pop_back();
-            stack.push_back(type);
+            typeStack.pop_back();
+            typeStack.pop_back();
+            typeStack.push_back(type);
             break;
         }
         case tMUL: {
             node->right()->visit(this);
             node->left()->visit(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getMulInsn(type));
-            stack.pop_back();
-            stack.pop_back();
-            stack.push_back(type);
+            typeStack.pop_back();
+            typeStack.pop_back();
+            typeStack.push_back(type);
             break;
         }
         case tDIV: {
             node->right()->visit(this);
             node->left()->visit(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getDivInsn(type));
-            stack.pop_back();
-            stack.pop_back();
-            stack.push_back(type);
+            typeStack.pop_back();
+            typeStack.pop_back();
+            typeStack.push_back(type);
             break;
         }
         case tMOD: {
             node->right()->visit(this);
             node->left()->visit(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getModInsn(type));
-            stack.pop_back();
-            stack.pop_back();
-            stack.push_back(type);
+            typeStack.pop_back();
+            typeStack.pop_back();
+            typeStack.push_back(type);
             break;
         }
         case tAAND: {
             node->right()->visit(this);
             node->left()->visit(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getAndInsn(type));
-            stack.pop_back();
-            stack.pop_back();
-            stack.push_back(type);
+            typeStack.pop_back();
+            typeStack.pop_back();
+            typeStack.push_back(type);
             break;
         }
         case tAOR: {
             node->right()->visit(this);
             node->left()->visit(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getOrInsn(type));
-            stack.pop_back();
-            stack.pop_back();
-            stack.push_back(type);
+            typeStack.pop_back();
+            typeStack.pop_back();
+            typeStack.push_back(type);
             break;
         }
         case tAXOR: {
             node->right()->visit(this);
             node->left()->visit(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getXorInsn(type));
-            stack.pop_back();
-            stack.pop_back();
-            stack.push_back(type);
+            typeStack.pop_back();
+            typeStack.pop_back();
+            typeStack.push_back(type);
             break;
         }
         case tEQ: {
@@ -153,7 +153,7 @@ void BytecodeTranslatorVisitor::visitUnaryOpNode(UnaryOpNode *node) {
     switch (node->kind()) {
         case tSUB: {
             node->visitChildren(this);
-            VarType type = stack.back();
+            VarType type = typeStack.back();
             bytecode.addInsn(getNegInsn(type));
             break;
         }
@@ -177,21 +177,21 @@ void BytecodeTranslatorVisitor::visitStringLiteralNode(StringLiteralNode *node) 
     bytecode.addInsn(getLoadInsn(VT_STRING));
     stringConstants.push_back(node->literal());
     bytecode.addUInt16(stringConstants.size() - 1);
-    stack.push_back(VT_STRING);
+    typeStack.push_back(VT_STRING);
 }
 
 void BytecodeTranslatorVisitor::visitDoubleLiteralNode(DoubleLiteralNode *node) {
     //std::cout << "double literal:" << node->literal() << std::endl;
     bytecode.addInsn(getLoadInsn(VT_DOUBLE));
     bytecode.addDouble(node->literal());
-    stack.push_back(VT_DOUBLE);
+    typeStack.push_back(VT_DOUBLE);
 }
 
 void BytecodeTranslatorVisitor::visitIntLiteralNode(IntLiteralNode *node) {
     //std::cout << "int literal:" << node->literal() << std::endl;
     bytecode.addInsn(getLoadInsn(VT_INT));
     bytecode.addInt64(node->literal());
-    stack.push_back(VT_INT);
+    typeStack.push_back(VT_INT);
 }
 
 void BytecodeTranslatorVisitor::visitLoadNode(LoadNode *node) {
@@ -206,7 +206,7 @@ void BytecodeTranslatorVisitor::visitLoadNode(LoadNode *node) {
         bytecode.addInsn(getLoadVarInsn(type));
     }
     bytecode.addUInt16(var_id);
-    stack.push_back(type);
+    typeStack.push_back(type);
 }
 
 void BytecodeTranslatorVisitor::visitStoreNode(StoreNode *node) {
@@ -214,7 +214,7 @@ void BytecodeTranslatorVisitor::visitStoreNode(StoreNode *node) {
     //calculated value is now on TOS
     node->value()->visit(this);
 
-    VarType type = stack.back();
+    VarType type = typeStack.back();
     switch (node->op()) {
         case tASSIGN:
             generateStoreVarBytecode(node->var()->name(), type);
@@ -233,7 +233,7 @@ void BytecodeTranslatorVisitor::visitStoreNode(StoreNode *node) {
             break;
     }
 
-    stack.pop_back();
+    typeStack.pop_back();
 }
 
 void BytecodeTranslatorVisitor::generateStoreVarBytecode(std::string name, mathvm::VarType type) {
@@ -392,7 +392,16 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
         funcEndLabel.bind(bytecode.length(), &bytecode);
     }
 
-    node->visitChildren(this);
+    for (uint32_t i = 0; i < node->nodes(); i++) {
+        AstNode * child = node->nodeAt(i);
+        child->visit(this);
+        if (child->isCallNode()) {
+            VarType returnType = functionTypesMap[child->asCallNode()->name()];
+            if (returnType != VT_VOID) {
+                consumeTOS(returnType);
+            }
+        }
+    }
 
     //std::cout << "end blockNode" << std::endl;
 }
@@ -424,7 +433,7 @@ void BytecodeTranslatorVisitor::visitCallNode(CallNode *node) {
     }
     bytecode.addInsn(BC_CALL);
     bytecode.addUInt16(functionMap[node->name()]);
-    stack.push_back(functionTypesMap[node->name()]);
+    typeStack.push_back(functionTypesMap[node->name()]);
 //    std::cout << "end callNode" << std::endl;
 
 }
@@ -440,7 +449,7 @@ void BytecodeTranslatorVisitor::visitPrintNode(PrintNode *node) {
     //std::cout << "start printNode" << std::endl;
     for (int i = 0; i < (int) node->operands(); ++i) {
         node->operandAt(i)->visit(this); //now operand is on TOS
-        switch (stack.back()) {
+        switch (typeStack.back()) {
             case VT_INT:
                 bytecode.addInsn(BC_IPRINT);
                 break;
@@ -474,4 +483,8 @@ std::pair<uint16_t, uint16_t> BytecodeTranslatorVisitor::findVar(std::string var
         }
     }
     return {context, id};
+}
+
+void BytecodeTranslatorVisitor::consumeTOS(mathvm::VarType type) {
+    bytecode.addInsn(getStoreVar0(type));
 }

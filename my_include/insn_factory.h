@@ -164,3 +164,16 @@ inline Instruction getXorInsn(VarType type) {
             return BC_INVALID;
     }
 }
+
+inline Instruction getStoreVar0(VarType type) {
+    switch (type) {
+        case VT_DOUBLE:
+            return BC_STOREDVAR0;
+        case VT_INT:
+            return BC_STOREIVAR0;
+        case VT_STRING:
+            return BC_STORESVAR0;
+        default:
+            return BC_INVALID;
+    }
+}

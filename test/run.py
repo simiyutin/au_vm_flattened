@@ -109,8 +109,8 @@ def main(argv):
     #ackermann_closure - 4m18.917s through time
     slow = ['fib', 'ackermann', 'ackermann_closure']
     toskip = ['complex', 'simple_complex', 'complex2', 'casts', 'function_native']
-    # if t != 'freetest':
-    if t in slow or t in toskip:
+    if t != 'freetest':
+    # if t in slow or t in toskip:
         continue
     runTest(mvm, testdir, t, options.doublerun)
 

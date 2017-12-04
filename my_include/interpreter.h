@@ -214,6 +214,22 @@ private:
         getVarMap<std::string>(contextId)[varId] = stringId;
     }
 
+    template <typename T>
+    void handleStoreVar0() {
+        handleStoreVar0(identity<T>());
+    }
+
+    template <typename T>
+    void handleStoreVar0(identity<T>) {
+        T val = stack.getTyped<T>();
+        (void) val;
+    }
+
+    void handleStoreVar0(identity<std::string>) {
+        uint16_t str_id = stack.getTyped<uint16_t>();
+        (void) str_id;
+    }
+
 
     template <typename T>
     void handleLoadVar() {

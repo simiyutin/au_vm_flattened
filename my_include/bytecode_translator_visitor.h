@@ -59,6 +59,7 @@ private:
     void generateStoreVarBytecode(std::string name, mathvm::VarType type);
     void generateLoadVarBytecode(std::string name, mathvm::VarType type);
     void generateVarOperationBytecode(std::string name, mathvm::Instruction localInsn, mathvm::Instruction ctxInsn);
+    void consumeTOS(mathvm::VarType type);
 
 
     std::vector<scope> scopes = {scope{}};
@@ -67,10 +68,9 @@ private:
     std::map<std::string, mathvm::VarType> functionTypesMap;
     std::map<uint16_t, size_t> functionOffsetsMap;
     int globalFunctionCounter = 0;
-    std::vector<int> functionStartPoints;
 
     mathvm::Bytecode bytecode;
-    std::vector<mathvm::VarType> stack;
+    std::vector<mathvm::VarType> typeStack;
     int topMostVariablesNum = -1;
     std::vector<std::string> stringConstants = {""};
     mathvm::Label * expressionEndLabel = nullptr;

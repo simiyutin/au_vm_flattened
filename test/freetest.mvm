@@ -5,7 +5,7 @@ function int foo() {
             r += 1;
             return r;
         }
-        baz(); // todo check if result is ignored
+        baz();
         return r;
     }
     function void boz() {
