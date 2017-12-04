@@ -25,9 +25,9 @@ namespace detail {
     };
 }
 
-struct CodeImpl : mathvm::Code {
+struct Interpreter : mathvm::Code {
 
-    CodeImpl(const mathvm::Bytecode & bytecode,
+    Interpreter(const mathvm::Bytecode & bytecode,
              const std::map<std::string, int> & topMostVars,
              const std::vector<std::string> & stringConstants,
              const std::map<int, int> & functionOffsets) :

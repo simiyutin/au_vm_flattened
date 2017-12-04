@@ -1,5 +1,4 @@
-#include "../my_include/code_impl.h"
-#include <cassert>
+#include "../my_include/interpreter.h"
 #include <functional>
 
 using namespace mathvm;
@@ -7,7 +6,7 @@ using namespace std;
 
 using pVar = Var *;
 
-Status* CodeImpl::execute(vector<pVar> &vars) {
+Status* Interpreter::execute(vector<pVar> &vars) {
 
     for (pVar var : vars) {
         switch (var->type()) {
@@ -216,6 +215,6 @@ Status* CodeImpl::execute(vector<pVar> &vars) {
     return Status::Ok();
 }
 
-void CodeImpl::disassemble(std::ostream &out, mathvm::FunctionFilter *filter) {
+void Interpreter::disassemble(std::ostream &out, mathvm::FunctionFilter *filter) {
     bytecode.dump(out);
 }

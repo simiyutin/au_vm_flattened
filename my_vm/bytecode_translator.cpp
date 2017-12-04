@@ -3,7 +3,7 @@
 #include "../vm/parser.h"
 #include <fstream>
 #include "../my_include/bytecode_translator_visitor.h"
-#include "../my_include/code_impl.h"
+#include "../my_include/interpreter.h"
 
 using namespace mathvm;
 using namespace std;
@@ -26,7 +26,7 @@ Status *BytecodeTranslatorImpl::translate(const string &program, Code **code) {
     map<string, int> topMostVars = visitor.getTopMostVars();
     vector<string> stringConstants = visitor.getStringConstants();
     std::map<int, int> functionOffsets = visitor.getFunctionOffsetsMap();
-    (*code) = new CodeImpl(bytecode, topMostVars, stringConstants, functionOffsets);
+    (*code) = new Interpreter(bytecode, topMostVars, stringConstants, functionOffsets);
     std::ofstream ofs("lastBytecode.txt");
     (*code)->disassemble(ofs);
 

@@ -10,7 +10,7 @@ add_executable(my_repo
         my_include/ast_printer_translator.h
         my_include/ast_printer_visitor.h
         my_include/bytecode_translator_visitor.h
-        my_include/code_impl.h
+        my_include/interpreter.h
         my_include/identity.h
         my_include/insn_factory.h
         my_include/scope.h
@@ -28,6 +28,6 @@ add_executable(my_repo
         my_vm/ast_printer_visitor.cpp
         my_vm/bytecode_translator.cpp
         my_vm/bytecode_translator_visitor.cpp
-        my_vm/code_impl.cpp
+        my_vm/interpreter.cpp
         main.cpp
-        my_vm/translator_impl.cpp)
+        my_vm/translator_factory.cpp)
