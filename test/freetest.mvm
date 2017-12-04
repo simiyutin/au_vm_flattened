@@ -1,0 +1,19 @@
+function int foo() {
+    int r = 0;
+    function int bar() {
+        function int baz() {
+            r += 1;
+            return r;
+        }
+        baz(); // todo check if result is ignored
+        return r;
+    }
+    function void boz() {
+        r += 1;
+    }
+    boz();
+    int res = bar();
+    return res - r;
+}
+
+print(foo(0));

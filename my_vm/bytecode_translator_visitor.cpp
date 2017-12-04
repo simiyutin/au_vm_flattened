@@ -1,6 +1,5 @@
 #include "../my_include/bytecode_translator_visitor.h"
 #include "../my_include/insn_factory.h"
-#include <string>
 #include <fstream>
 
 using namespace mathvm;
@@ -210,7 +209,6 @@ void BytecodeTranslatorVisitor::visitLoadNode(LoadNode *node) {
     stack.push_back(type);
 }
 
-
 void BytecodeTranslatorVisitor::visitStoreNode(StoreNode *node) {
 
     //calculated value is now on TOS
@@ -401,7 +399,7 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
 
 void BytecodeTranslatorVisitor::visitFunctionNode(FunctionNode *node) {
 //    std::cout << "start functionNode" << std::endl;
-    NativeCallNode * native = check_native(node);
+    NativeCallNode * native = checkNative(node);
     if (native) {
         native->visit(this);
     } else {
@@ -459,7 +457,7 @@ void BytecodeTranslatorVisitor::visitPrintNode(PrintNode *node) {
     //std::cout << "end printNode" << std::endl;
 }
 
-NativeCallNode *BytecodeTranslatorVisitor::check_native(FunctionNode *node) {
+NativeCallNode *BytecodeTranslatorVisitor::checkNative(FunctionNode *node) {
     BlockNode * block = node->body();
     AstNode * first_child = block->nodeAt(0);
     NativeCallNode * native = dynamic_cast<NativeCallNode*>(first_child);

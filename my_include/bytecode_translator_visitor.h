@@ -54,7 +54,7 @@ struct BytecodeTranslatorVisitor : mathvm::AstBaseVisitor {
 
 private:
 
-    mathvm::NativeCallNode * check_native(mathvm::FunctionNode * node);
+    mathvm::NativeCallNode * checkNative(mathvm::FunctionNode *node);
     std::pair<uint16_t, uint16_t> findVar(std::string varName);
     void generateStoreVarBytecode(std::string name, mathvm::VarType type);
     void generateLoadVarBytecode(std::string name, mathvm::VarType type);
