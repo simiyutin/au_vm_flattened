@@ -3,7 +3,7 @@
 #include "identity.h"
 
 struct stack_frame {
-    stack_frame(size_t executionPoint, int64_t function_id) :
+    stack_frame(uint32_t executionPoint, int64_t function_id) :
             executionPoint(executionPoint),
             function_id(function_id)
     {};
@@ -25,7 +25,7 @@ struct stack_frame {
     std::map<int, double> doubleVarMap;
     std::map<int, uint16_t> stringVarMap;
 
-    size_t executionPoint;
+    uint32_t executionPoint;
     int64_t function_id;
     int64_t stack_size = 0;
 };

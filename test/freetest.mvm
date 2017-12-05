@@ -2,9 +2,8 @@ int x = 1;
 int y = 1;
 int z = 1;
 
-
-function void foo(int a) {
-    function void bar(int b) {
+function int foo(int a) {
+    function int bar(int b) {
         if (b <= 0) {
             return z;
         }
@@ -13,4 +12,4 @@ function void foo(int a) {
     return bar(a - 1);
 }
 
-foo(10);
+print(foo(10));

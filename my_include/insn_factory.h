@@ -8,18 +8,18 @@
 
 using namespace mathvm;
 
-inline Instruction getStoreVarInsn(VarType type) {
-    switch (type) {
-        case VT_DOUBLE:
-            return BC_STOREDVAR;
-        case VT_INT:
-            return BC_STOREIVAR;
-        case VT_STRING:
-            return BC_STORESVAR;
-        default:
-            return BC_INVALID;
-    }
-}
+//inline Instruction getStoreVarInsn(VarType type) {
+//    switch (type) {
+//        case VT_DOUBLE:
+//            return BC_STOREDVAR;
+//        case VT_INT:
+//            return BC_STOREIVAR;
+//        case VT_STRING:
+//            return BC_STORESVAR;
+//        default:
+//            return BC_INVALID;
+//    }
+//}
 
 inline Instruction getStoreCtxVarInsn(VarType type) {
     switch (type) {
@@ -34,18 +34,18 @@ inline Instruction getStoreCtxVarInsn(VarType type) {
     }
 }
 
-inline Instruction getLoadVarInsn(VarType type) {
-    switch (type) {
-        case VT_DOUBLE:
-            return BC_LOADDVAR;
-        case VT_INT:
-            return BC_LOADIVAR;
-        case VT_STRING:
-            return BC_LOADSVAR;
-        default:
-            return BC_INVALID;
-    }
-}
+//inline Instruction getLoadVarInsn(VarType type) {
+//    switch (type) {
+//        case VT_DOUBLE:
+//            return BC_LOADDVAR;
+//        case VT_INT:
+//            return BC_LOADIVAR;
+//        case VT_STRING:
+//            return BC_LOADSVAR;
+//        default:
+//            return BC_INVALID;
+//    }
+//}
 
 inline Instruction getLoadCtxVarInsn(VarType type) {
     switch (type) {

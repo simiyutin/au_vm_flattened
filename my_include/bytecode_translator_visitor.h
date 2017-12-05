@@ -55,19 +55,19 @@ struct BytecodeTranslatorVisitor : mathvm::AstBaseVisitor {
 private:
 
     mathvm::NativeCallNode * checkNative(mathvm::FunctionNode *node);
-    std::pair<uint16_t, uint16_t> findVar(std::string varName);
+    std::pair<uint16_t, uint16_t> findVar(const std::string & varName);
     void generateStoreVarBytecode(const std::string & name, mathvm::VarType type);
     void generateLoadVarBytecode(const std::string & name, mathvm::VarType type);
-    void generateVarOperationBytecode(const std::string & name, mathvm::Instruction localInsn, mathvm::Instruction ctxInsn);
+    void generateVarOperationBytecode(const std::string & name, mathvm::Instruction ctxInsn);
     void consumeTOS(mathvm::VarType type);
 
 
-    std::vector<scope> scopes = {scope{}};
+    std::vector<scope> scopes = {scope{0}};
 
-    std::map<std::string, int> functionMap;
+    std::map<std::string, uint16_t > functionMap;
     std::map<std::string, mathvm::VarType> functionTypesMap;
     std::map<uint16_t, size_t> functionOffsetsMap;
-    int globalFunctionCounter = 0;
+    uint16_t globalFunctionCounter = 0;
 
     mathvm::Bytecode bytecode;
     std::vector<mathvm::VarType> typeStack;

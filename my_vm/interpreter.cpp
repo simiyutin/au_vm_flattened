@@ -11,13 +11,13 @@ Status* Interpreter::execute(vector<pVar> &vars) {
     for (pVar var : vars) {
         switch (var->type()) {
             case VT_INT:
-                getVarMap<int64_t>()[topMostVars[var->name()]] = var->getIntValue();
+                getVarMap<int64_t>(0)[topMostVars[var->name()]] = var->getIntValue();
                 break;
             case VT_DOUBLE:
-                getVarMap<double>()[topMostVars[var->name()]] = var->getDoubleValue();
+                getVarMap<double>(0)[topMostVars[var->name()]] = var->getDoubleValue();
                 break;
             case VT_STRING:
-                stringConstants[getVarMap<std::string>()[topMostVars[var->name()]]] = var->getStringValue();
+                stringConstants[getVarMap<std::string>(0)[topMostVars[var->name()]]] = var->getStringValue();
                 break;
             default:
                 break;
@@ -102,15 +102,15 @@ Status* Interpreter::execute(vector<pVar> &vars) {
                 handleXor<int64_t>();
                 break;
 
-            case BC_STOREIVAR:
-                handleStoreVar<int64_t>();
-                break;
-            case BC_STOREDVAR:
-                handleStoreVar<double>();
-                break;
-            case BC_STORESVAR:
-                handleStoreVar<std::string>();
-                break;
+//            case BC_STOREIVAR:
+//                handleStoreVar<int64_t>();
+//                break;
+//            case BC_STOREDVAR:
+//                handleStoreVar<double>();
+//                break;
+//            case BC_STORESVAR:
+//                handleStoreVar<std::string>();
+//                break;
             case BC_STORECTXIVAR:
                 handleStoreCtxVar<int64_t>();
                 break;
@@ -131,15 +131,15 @@ Status* Interpreter::execute(vector<pVar> &vars) {
                 handleStoreVar0<std::string>();
                 break;
 
-            case BC_LOADDVAR:
-                handleLoadVar<double>();
-                break;
-            case BC_LOADIVAR:
-                handleLoadVar<int64_t>();
-                break;
-            case BC_LOADSVAR:
-                handleLoadVar<std::string>();
-                break;
+//            case BC_LOADDVAR:
+//                handleLoadVar<double>();
+//                break;
+//            case BC_LOADIVAR:
+//                handleLoadVar<int64_t>();
+//                break;
+//            case BC_LOADSVAR:
+//                handleLoadVar<std::string>();
+//                break;
             case BC_LOADCTXDVAR:
                 handleLoadCtxVar<double>();
                 break;
@@ -206,13 +206,13 @@ Status* Interpreter::execute(vector<pVar> &vars) {
     for (pVar var : vars) {
         switch (var->type()) {
             case VT_INT:
-                var->setIntValue(getVarMap<int64_t>()[topMostVars[var->name()]]);
+                var->setIntValue(getVarMap<int64_t>(0)[topMostVars[var->name()]]);
                 break;
             case VT_DOUBLE:
-                var->setDoubleValue(getVarMap<double>()[topMostVars[var->name()]]);
+                var->setDoubleValue(getVarMap<double>(0)[topMostVars[var->name()]]);
                 break;
             case VT_STRING: {
-                std::string val = stringConstants[getVarMap<std::string>()[topMostVars[var->name()]]];
+                std::string val = stringConstants[getVarMap<std::string>(0)[topMostVars[var->name()]]];
                 var->setStringValue(val.c_str());
                 break;
             }

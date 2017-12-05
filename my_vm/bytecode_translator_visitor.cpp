@@ -199,12 +199,8 @@ void BytecodeTranslatorVisitor::visitLoadNode(LoadNode *node) {
     std::pair <uint16_t, uint16_t> p = findVar(node->var()->name());
     uint16_t context = p.first;
     uint16_t var_id = p.second;
-    if (context > 0) {
-        bytecode.addInsn(getLoadCtxVarInsn(type));
-        bytecode.addUInt16(context);
-    } else {
-        bytecode.addInsn(getLoadVarInsn(type));
-    }
+    bytecode.addInsn(getLoadCtxVarInsn(type));
+    bytecode.addUInt16(context);
     bytecode.addUInt16(var_id);
     typeStack.push_back(type);
 }
@@ -237,24 +233,19 @@ void BytecodeTranslatorVisitor::visitStoreNode(StoreNode *node) {
 }
 
 void BytecodeTranslatorVisitor::generateStoreVarBytecode(const std::string & name, mathvm::VarType type) {
-    generateVarOperationBytecode(name, getStoreVarInsn(type), getStoreCtxVarInsn(type));
+    generateVarOperationBytecode(name, getStoreCtxVarInsn(type));
 }
 
 void BytecodeTranslatorVisitor::generateLoadVarBytecode(const std::string & name, mathvm::VarType type) {
-    generateVarOperationBytecode(name, getLoadVarInsn(type), getLoadCtxVarInsn(type));
+    generateVarOperationBytecode(name, getLoadCtxVarInsn(type));
 }
 
-void BytecodeTranslatorVisitor::generateVarOperationBytecode(const std::string & name, mathvm::Instruction localInsn,
-                                                             mathvm::Instruction ctxInsn) {
+void BytecodeTranslatorVisitor::generateVarOperationBytecode(const std::string & name, mathvm::Instruction ctxInsn) {
     std::pair<uint16_t, uint16_t> p = findVar(name);
     uint16_t context = p.first;
     uint16_t var_id = p.second;
-    if (context > 0) {
-        bytecode.addInsn(ctxInsn);
-        bytecode.addUInt16(context);
-    } else {
-        bytecode.addInsn(localInsn);
-    }
+    bytecode.addInsn(ctxInsn);
+    bytecode.addUInt16(context);
     bytecode.addUInt16(var_id);
 }
 
@@ -264,7 +255,8 @@ void BytecodeTranslatorVisitor::visitForNode(ForNode *node) {
     bytecode.addInsn(BC_SWAP);
 
     // присваиваем начальное значение переменной
-    bytecode.addInsn(getStoreVarInsn(VT_INT));
+    bytecode.addInsn(getStoreCtxVarInsn(VT_INT));
+    bytecode.addUInt16(scopes.back().function_id);
     bytecode.addUInt16(scopes.back().vars[node->var()->name()]);
     bytecode.addInsn(BC_POP);
 
@@ -276,7 +268,8 @@ void BytecodeTranslatorVisitor::visitForNode(ForNode *node) {
     node->inExpr()->visit(this); // на стеке сейчас находится сверху конечное значение, снизу начальное
     bytecode.addInsn(BC_SWAP);
     bytecode.addInsn(BC_POP);
-    bytecode.addInsn(getLoadVarInsn(VT_INT));
+    bytecode.addInsn(getLoadCtxVarInsn(VT_INT));
+    bytecode.addUInt16(scopes.back().function_id);
     bytecode.addUInt16(scopes.back().vars[node->var()->name()]);
     bytecode.addBranch(BC_IFICMPG, endLabel);
 
@@ -284,11 +277,13 @@ void BytecodeTranslatorVisitor::visitForNode(ForNode *node) {
     node->body()->visit(this);
 
     //инкрементируем переменную
-    bytecode.addInsn(getLoadVarInsn(VT_INT));
+    bytecode.addInsn(getLoadCtxVarInsn(VT_INT));
+    bytecode.addUInt16(scopes.back().function_id);
     bytecode.addUInt16(scopes.back().vars[node->var()->name()]);
     bytecode.addInsn(BC_ILOAD1);
     bytecode.addInsn(BC_IADD);
-    bytecode.addInsn(getStoreVarInsn(VT_INT));
+    bytecode.addInsn(getStoreCtxVarInsn(VT_INT));
+    bytecode.addUInt16(scopes.back().function_id);
     bytecode.addUInt16(scopes.back().vars[node->var()->name()]);
 
     //делаем джамп к проверке
@@ -355,7 +350,8 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
 
     while (it.hasNext()) {
         const AstVar * var = it.next();
-        scopes.back().vars[var->name()] = scopes.back().vars.size();
+        size_t var_id = scopes.back().vars.size();
+        scopes.back().vars[var->name()] = var_id;
     }
     if (topMostVariablesNum == -1) {
         topMostVariablesNum = scopes.back().vars.size();
@@ -366,7 +362,7 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
     Scope::FunctionIterator fit0(node->scope());
     while (fit0.hasNext()) {
         const AstFunction * func = fit0.next();
-        functionMap[func->name()] = globalFunctionCounter++;
+        functionMap[func->name()] = ++globalFunctionCounter;
         functionTypesMap[func->name()] = func->returnType();
     }
 
@@ -379,12 +375,13 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
         Label funcEndLabel;
         bytecode.addBranch(BC_JA, funcEndLabel);
         functionOffsetsMap[functionMap[func->name()]] = bytecode.length();
-
-        scopes.push_back(scope{});
-        for (size_t i = 0; i < func->parametersNumber(); ++i) {
-            size_t newVarId = scopes.back().vars.size();
+        uint16_t function_id = functionMap[func->name()];
+        scopes.emplace_back(function_id);
+        for (uint32_t i = 0; i < func->parametersNumber(); ++i) {
+            auto newVarId = uint16_t(scopes.back().vars.size());
             scopes.back().vars[func->parameterName(i)] = newVarId;
-            bytecode.addInsn(getStoreVarInsn(func->parameterType(i)));
+            bytecode.addInsn(getStoreCtxVarInsn(func->parameterType(i)));
+            bytecode.addUInt16(function_id);
             bytecode.addUInt16(newVarId);
         }
         func->node()->visit(this);
@@ -473,12 +470,13 @@ NativeCallNode *BytecodeTranslatorVisitor::checkNative(FunctionNode *node) {
     return native;
 }
 
-std::pair<uint16_t, uint16_t> BytecodeTranslatorVisitor::findVar(std::string varName) {
+std::pair<uint16_t, uint16_t> BytecodeTranslatorVisitor::findVar(const std::string & varName) {
     uint16_t context = 0;
     uint16_t id = 0;
-    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it, ++context) {
+    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
         if (it->vars.find(varName) != it->vars.end()) {
             id = (it->vars)[varName];
+            context = it->function_id;
             break;
         }
     }
