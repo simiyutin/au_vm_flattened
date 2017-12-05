@@ -159,6 +159,24 @@ private:
         stack.addTyped(-fst);
     }
 
+    template <typename FROM, typename TO>
+    void handleCast() {
+        handleCast(identity<FROM>(), identity<TO>());
+    };
+
+    template <typename FROM, typename TO>
+    void handleCast(identity<FROM>, identity<TO>) {
+        FROM val = stack.getTyped<FROM>();
+        stack.addTyped(static_cast<TO>(val));
+    };
+
+    void handleCast(identity<std::string>, identity<int64_t>) {
+        uint16_t string_id = stack.getTyped<uint16_t>();
+        // bom bom, only int, not int64
+        int64_t val = std::atoi(stringConstants[string_id].data());
+        stack.addTyped(val);
+    };
+
 //    template <typename T>
 //    void handleStoreVar() {
 //        handleStoreVar(identity<T>());
@@ -217,19 +235,39 @@ private:
 
     template <typename T>
     void handleStoreVar0() {
-        handleStoreVar0(identity<T>());
+        handleStoreRegister(identity<T>(), 0);
     }
 
     template <typename T>
-    void handleStoreVar0(identity<T>) {
-        T val = stack.getTyped<T>();
-        (void) val;
+    void handleStoreVar1() {
+        handleStoreRegister(identity<T>(), 1);
     }
 
-    void handleStoreVar0(identity<std::string>) {
-        uint16_t str_id = stack.getTyped<uint16_t>();
-        (void) str_id;
+    template <typename T>
+    void handleStoreRegister(identity<T>, uint8_t reg_id) {
+        using typeImage = typename detail::image<T>::type;
+        auto val = stack.getTyped<typeImage>();
+        getRegister<typeImage>()[reg_id] = val;
     }
+
+    template <typename T>
+    void handleLoadVar0() {
+        handleLoadRegister(identity<T>(), 0);
+    }
+
+    template <typename T>
+    void handleLoadVar1() {
+        handleLoadRegister(identity<T>(), 1);
+    }
+
+    template <typename T>
+    void handleLoadRegister(identity<T>, uint8_t reg_id) {
+        using typeImage = typename detail::image<T>::type;
+        typeImage val = getRegister<typeImage>()[reg_id];
+        stack.addTyped(val);
+    }
+
+
 
 
 //    template <typename T>
@@ -379,7 +417,7 @@ private:
 
         int64_t new_stack_size = stack.length();
         int64_t old_stack_size = call_stack.back().stack_size;
-        if (new_stack_size - old_stack_size != 0 && new_stack_size - old_stack_size != sizeof(int64_t)) {
+        if (new_stack_size - old_stack_size > (int) sizeof(int64_t)) {
             std::cout << "STACK SANITIZER ERROR: BEFORE: " << old_stack_size << " AFTER: " << new_stack_size
                       << std::endl;
             exit(300);
@@ -391,6 +429,12 @@ private:
         size_t stackframe_id = contexts[context].back();
         return call_stack[stackframe_id].getVarMap(identity<T>());
     };
+
+    template <typename T>
+    T* getRegister() {
+        static T registers[] = {0, 0, 0, 0};
+        return registers;
+    }
 
     mathvm::Bytecode bytecode;
     Stack stack;

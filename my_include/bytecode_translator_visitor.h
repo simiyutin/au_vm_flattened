@@ -7,6 +7,29 @@
 #include <map>
 #include "scope.h"
 
+namespace detail {
+    inline mathvm::VarType getCommonType(mathvm::VarType t1, mathvm::VarType t2) {
+        static std::map<std::pair<mathvm::VarType, mathvm::VarType>, mathvm::VarType> commonType = {
+                {{mathvm::VT_INT, mathvm::VT_DOUBLE}, mathvm::VT_DOUBLE},
+                {{mathvm::VT_INT, mathvm::VT_INT}, mathvm::VT_INT},
+                {{mathvm::VT_INT, mathvm::VT_STRING}, mathvm::VT_INT},
+                {{mathvm::VT_DOUBLE, mathvm::VT_DOUBLE}, mathvm::VT_DOUBLE},
+                {{mathvm::VT_STRING, mathvm::VT_STRING}, mathvm::VT_STRING},
+                
+        };
+        auto it = commonType.find({t1, t2});
+        if (it != commonType.end()) {
+            return it->second;
+        }
+        it = commonType.find({t2, t1});
+        if (it != commonType.end()) {
+            return it->second;
+        }
+        std::cout << "TRANSLATOR ERROR: INCOMPATIBLE TYPES:" << t1 << "," << t2 << std::endl;
+        exit(300);
+    }
+}
+
 struct BytecodeTranslatorVisitor : mathvm::AstBaseVisitor {
 
 #define VISITOR_FUNCTION(type, name) \
@@ -60,6 +83,20 @@ private:
     void generateLoadVarBytecode(const std::string & name, mathvm::VarType type);
     void generateVarOperationBytecode(const std::string & name, mathvm::Instruction ctxInsn);
     void consumeTOS(mathvm::VarType type);
+    void castTOSPair(mathvm::VarType top, mathvm::VarType bottom, mathvm::VarType target);
+    template <typename T>
+    void handleArithmeticOperation(mathvm::BinaryOpNode* node, T functor) {
+        node->right()->visit(this);
+        mathvm::VarType typeRight = typeStack.back();
+        node->left()->visit(this);
+        mathvm::VarType typeLeft = typeStack.back();
+        mathvm::VarType commonType = detail::getCommonType(typeLeft, typeRight);
+        castTOSPair(typeLeft, typeRight, commonType);
+        bytecode.addInsn(functor(commonType));
+        typeStack.pop_back();
+        typeStack.pop_back();
+        typeStack.push_back(commonType);
+    };
 
 
     std::vector<scope> scopes = {scope{0}};

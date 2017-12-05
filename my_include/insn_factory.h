@@ -177,3 +177,47 @@ inline Instruction getStoreVar0(VarType type) {
             return BC_INVALID;
     }
 }
+
+inline Instruction getStoreVar1(VarType type) {
+    switch (type) {
+        case VT_DOUBLE:
+            return BC_STOREDVAR1;
+        case VT_INT:
+            return BC_STOREIVAR1;
+        case VT_STRING:
+            return BC_STORESVAR1;
+        default:
+            return BC_INVALID;
+    }
+}
+
+inline Instruction getLoadVar1(VarType type) {
+    switch (type) {
+        case VT_DOUBLE:
+            return BC_LOADDVAR1;
+        case VT_INT:
+            return BC_LOADIVAR1;
+        case VT_STRING:
+            return BC_LOADSVAR1;
+        default:
+            return BC_INVALID;
+    }
+}
+
+inline Instruction getCast(VarType from, VarType to) {
+    if (from == VT_DOUBLE && to == VT_INT) {
+        return BC_D2I;
+    }
+    else
+    if (from == VT_INT && to == VT_DOUBLE) {
+        return BC_I2D;
+    }
+    else
+    if (from == VT_STRING && to == VT_INT) {
+        return BC_S2I;
+    }
+    else {
+        std::cout << "ERROR: unsupported cast" << std::endl;
+        exit(300);
+    }
+}

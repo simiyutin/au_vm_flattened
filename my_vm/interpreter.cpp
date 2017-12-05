@@ -102,6 +102,16 @@ Status* Interpreter::execute(vector<pVar> &vars) {
                 handleXor<int64_t>();
                 break;
 
+            case BC_I2D:
+                handleCast<int64_t, double>();
+                break;
+            case BC_D2I:
+                handleCast<double, int64_t>();
+                break;
+            case BC_S2I:
+                handleCast<std::string, int64_t>();
+                break;
+
 //            case BC_STOREIVAR:
 //                handleStoreVar<int64_t>();
 //                break;
@@ -129,6 +139,36 @@ Status* Interpreter::execute(vector<pVar> &vars) {
                 break;
             case BC_STORESVAR0:
                 handleStoreVar0<std::string>();
+                break;
+
+            case BC_STOREDVAR1:
+                handleStoreVar1<double>();
+                break;
+            case BC_STOREIVAR1:
+                handleStoreVar1<int64_t>();
+                break;
+            case BC_STORESVAR1:
+                handleStoreVar1<std::string>();
+                break;
+
+            case BC_LOADDVAR0:
+                handleLoadVar0<double>();
+                break;
+            case BC_LOADIVAR0:
+                handleLoadVar0<int64_t>();
+                break;
+            case BC_LOADSVAR0:
+                handleLoadVar0<std::string>();
+                break;
+
+            case BC_LOADDVAR1:
+                handleLoadVar1<double>();
+                break;
+            case BC_LOADIVAR1:
+                handleLoadVar1<int64_t>();
+                break;
+            case BC_LOADSVAR1:
+                handleLoadVar1<std::string>();
                 break;
 
 //            case BC_LOADDVAR:

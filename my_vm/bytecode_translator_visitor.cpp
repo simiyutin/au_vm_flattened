@@ -4,47 +4,25 @@
 
 using namespace mathvm;
 
+
+
 void BytecodeTranslatorVisitor::visitBinaryOpNode(BinaryOpNode *node) {
     //std::cout << "start BinaryOpNode" << std::endl;
-    switch (node->kind()) {
+    switch (node->kind()) { //todo refactor reduce duplication
         case tADD: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            VarType type = typeStack.back();
-            bytecode.addInsn(getAddInsn(type));
-            typeStack.pop_back();
-            typeStack.pop_back();
-            typeStack.push_back(type);
+            handleArithmeticOperation(node, &getAddInsn);
             break;
         }
         case tSUB: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            VarType type = typeStack.back();
-            bytecode.addInsn(getSubInsn(type));
-            typeStack.pop_back();
-            typeStack.pop_back();
-            typeStack.push_back(type);
+            handleArithmeticOperation(node, &getSubInsn);
             break;
         }
         case tMUL: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            VarType type = typeStack.back();
-            bytecode.addInsn(getMulInsn(type));
-            typeStack.pop_back();
-            typeStack.pop_back();
-            typeStack.push_back(type);
+            handleArithmeticOperation(node, &getMulInsn);
             break;
         }
         case tDIV: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            VarType type = typeStack.back();
-            bytecode.addInsn(getDivInsn(type));
-            typeStack.pop_back();
-            typeStack.pop_back();
-            typeStack.push_back(type);
+            handleArithmeticOperation(node, &getDivInsn);
             break;
         }
         case tMOD: {
@@ -211,6 +189,11 @@ void BytecodeTranslatorVisitor::visitStoreNode(StoreNode *node) {
     node->value()->visit(this);
 
     VarType type = typeStack.back();
+    if (type != node->var()->type()) {
+        bytecode.addInsn(getCast(type, node->var()->type()));
+        type = node->var()->type();
+    }
+    
     switch (node->op()) {
         case tASSIGN:
             generateStoreVarBytecode(node->var()->name(), type);
@@ -485,4 +468,15 @@ std::pair<uint16_t, uint16_t> BytecodeTranslatorVisitor::findVar(const std::stri
 
 void BytecodeTranslatorVisitor::consumeTOS(mathvm::VarType type) {
     bytecode.addInsn(getStoreVar0(type));
+}
+
+void BytecodeTranslatorVisitor::castTOSPair(mathvm::VarType top, mathvm::VarType bottom, mathvm::VarType target) {
+    if (bottom != target) {
+        bytecode.addInsn(getStoreVar1(top));
+        bytecode.addInsn(getCast(bottom, target));
+        bytecode.addInsn(getLoadVar1(top));
+    }
+    if (top != target) {
+        bytecode.addInsn(getCast(top, target));
+    }
 }
