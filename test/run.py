@@ -107,9 +107,9 @@ def main(argv):
     #fib - 2m17.692s through time
     #ackermann - 4m23.068s through time
     #ackermann_closure - 4m18.917s through time
-    slow = ['fib', 'ackermann', 'ackermann_closure']
-    toskip = ['complex2', 'casts', 'function_native']
-    # if t != 'complex':
+    slow = ['fib', 'ackermann', 'ackermann_closure', 'complex2']
+    toskip = ['casts', 'function_native']
+    # if t != 'complex2_verbose':
     if t in slow or t in toskip:
         continue
     runTest(mvm, testdir, t, options.doublerun)

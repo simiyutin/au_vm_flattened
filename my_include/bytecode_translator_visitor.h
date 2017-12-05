@@ -27,7 +27,7 @@ struct BytecodeTranslatorVisitor : mathvm::AstBaseVisitor {
         return stringConstants;
     };
 
-    std::map<uint16_t, size_t> getFunctionOffsetsMap() const {
+    std::map<uint16_t, uint32_t> getFunctionOffsetsMap() const {
         return functionOffsetsMap;
     };
 
@@ -66,7 +66,7 @@ private:
 
     std::map<std::string, uint16_t > functionMap;
     std::map<std::string, mathvm::VarType> functionTypesMap;
-    std::map<uint16_t, size_t> functionOffsetsMap;
+    std::map<uint16_t, uint32_t> functionOffsetsMap;
     uint16_t globalFunctionCounter = 0;
 
     mathvm::Bytecode bytecode;

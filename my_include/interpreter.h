@@ -30,7 +30,7 @@ struct Interpreter : mathvm::Code {
     Interpreter(const mathvm::Bytecode & bytecode,
              const std::map<std::string, int> & topMostVars,
              const std::vector<std::string> & stringConstants,
-             const std::map<uint16_t, size_t> & functionOffsets) :
+             const std::map<uint16_t, uint32_t> & functionOffsets) :
             bytecode(bytecode),
             topMostVars(topMostVars),
             stringConstants(stringConstants),
@@ -286,7 +286,6 @@ private:
         uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
         uint16_t stringId = getVarMap<std::string>(contextId)[varId];
-
         stack.addUInt16(stringId);
     }
 
@@ -363,12 +362,12 @@ private:
     }
     
     void handleCall() {
-//        std::cout << "--call" << std::endl;
+//        std::cout << "--call: depth=" << call_stack.size() << std::endl;
         uint16_t function_id = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
         call_stack.back().stack_size = stack.length();
         contexts[function_id].push_back(call_stack.size());
-        size_t new_execution_point = functionOffsets.find(function_id)->second;
+        uint32_t new_execution_point = functionOffsets.find(function_id)->second;
         call_stack.push_back(stack_frame(new_execution_point, int64_t(function_id)));
     }
 
@@ -380,7 +379,7 @@ private:
 
         int64_t new_stack_size = stack.length();
         int64_t old_stack_size = call_stack.back().stack_size;
-        if (new_stack_size > old_stack_size + sizeof(int64_t)) {
+        if (new_stack_size - old_stack_size != 0 && new_stack_size - old_stack_size != sizeof(int64_t)) {
             std::cout << "STACK SANITIZER ERROR: BEFORE: " << old_stack_size << " AFTER: " << new_stack_size
                       << std::endl;
             exit(300);
@@ -397,7 +396,7 @@ private:
     Stack stack;
     std::map<std::string, int> topMostVars;
     std::vector<std::string> stringConstants;
-    const std::map<uint16_t , size_t> functionOffsets;
+    const std::map<uint16_t , uint32_t> functionOffsets;
     std::vector<stack_frame> call_stack;
     std::map<uint16_t, std::vector<size_t>> contexts;
 };
