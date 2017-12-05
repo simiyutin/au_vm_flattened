@@ -56,9 +56,9 @@ private:
 
     mathvm::NativeCallNode * checkNative(mathvm::FunctionNode *node);
     std::pair<uint16_t, uint16_t> findVar(std::string varName);
-    void generateStoreVarBytecode(std::string name, mathvm::VarType type);
-    void generateLoadVarBytecode(std::string name, mathvm::VarType type);
-    void generateVarOperationBytecode(std::string name, mathvm::Instruction localInsn, mathvm::Instruction ctxInsn);
+    void generateStoreVarBytecode(const std::string & name, mathvm::VarType type);
+    void generateLoadVarBytecode(const std::string & name, mathvm::VarType type);
+    void generateVarOperationBytecode(const std::string & name, mathvm::Instruction localInsn, mathvm::Instruction ctxInsn);
     void consumeTOS(mathvm::VarType type);
 
 

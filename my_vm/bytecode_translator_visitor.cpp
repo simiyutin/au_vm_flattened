@@ -236,15 +236,15 @@ void BytecodeTranslatorVisitor::visitStoreNode(StoreNode *node) {
     typeStack.pop_back();
 }
 
-void BytecodeTranslatorVisitor::generateStoreVarBytecode(std::string name, mathvm::VarType type) {
+void BytecodeTranslatorVisitor::generateStoreVarBytecode(const std::string & name, mathvm::VarType type) {
     generateVarOperationBytecode(name, getStoreVarInsn(type), getStoreCtxVarInsn(type));
 }
 
-void BytecodeTranslatorVisitor::generateLoadVarBytecode(std::string name, mathvm::VarType type) {
+void BytecodeTranslatorVisitor::generateLoadVarBytecode(const std::string & name, mathvm::VarType type) {
     generateVarOperationBytecode(name, getLoadVarInsn(type), getLoadCtxVarInsn(type));
 }
 
-void BytecodeTranslatorVisitor::generateVarOperationBytecode(std::string name, mathvm::Instruction localInsn,
+void BytecodeTranslatorVisitor::generateVarOperationBytecode(const std::string & name, mathvm::Instruction localInsn,
                                                              mathvm::Instruction ctxInsn) {
     std::pair<uint16_t, uint16_t> p = findVar(name);
     uint16_t context = p.first;
