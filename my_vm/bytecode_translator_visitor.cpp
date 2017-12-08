@@ -7,8 +7,7 @@ using namespace mathvm;
 
 
 void BytecodeTranslatorVisitor::visitBinaryOpNode(BinaryOpNode *node) {
-    //std::cout << "start BinaryOpNode" << std::endl;
-    switch (node->kind()) { //todo refactor reduce duplication
+    switch (node->kind()) {
         case tADD: {
             handleArithmeticOperation(node, &getAddInsn);
             break;
@@ -26,91 +25,53 @@ void BytecodeTranslatorVisitor::visitBinaryOpNode(BinaryOpNode *node) {
             break;
         }
         case tMOD: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            VarType type = typeStack.back();
-            bytecode.addInsn(getModInsn(type));
-            typeStack.pop_back();
-            typeStack.pop_back();
-            typeStack.push_back(type);
+            handleArithmeticOperation(node, &getModInsn);
             break;
         }
         case tAAND: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            VarType type = typeStack.back();
-            bytecode.addInsn(getAndInsn(type));
-            typeStack.pop_back();
-            typeStack.pop_back();
-            typeStack.push_back(type);
+            handleArithmeticOperation(node, &getAndInsn);
             break;
         }
         case tAOR: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            VarType type = typeStack.back();
-            bytecode.addInsn(getOrInsn(type));
-            typeStack.pop_back();
-            typeStack.pop_back();
-            typeStack.push_back(type);
+            handleArithmeticOperation(node, &getOrInsn);
             break;
         }
         case tAXOR: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            VarType type = typeStack.back();
-            bytecode.addInsn(getXorInsn(type));
-            typeStack.pop_back();
-            typeStack.pop_back();
-            typeStack.push_back(type);
+            handleArithmeticOperation(node, &getXorInsn);
             break;
         }
         case tEQ: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            handleBinaryLogic(BC_IFICMPE, BC_IFICMPNE);
+            generateLE(node->left(), node->right());
+            generateLE(node->right(), node->left());
+            bytecode.add(BC_IAAND);
             break;
         }
         case tLT: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            handleBinaryLogic(BC_IFICMPL, BC_IFICMPGE);
+            generateLT(node->left(), node->right());
             break;
         }
         case tGT: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            handleBinaryLogic(BC_IFICMPG, BC_IFICMPLE);
+            generateLT(node->right(), node->left());
             break;
         }
         case tGE: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            handleBinaryLogic(BC_IFICMPGE, BC_IFICMPL);
+            generateLE(node->right(), node->left());
             break;
         }
         case tLE: {
-            node->right()->visit(this);
-            node->left()->visit(this);
-            handleBinaryLogic(BC_IFICMPLE, BC_IFICMPG);
+            generateLE(node->left(), node->right());
             break;
         }
         case tAND: {
-            if (!expressionEndLabel) {
-                assert(!expressionStartLabel);
-                expressionEndLabel = new Label();
-            }
             node->right()->visit(this);
             node->left()->visit(this);
+            bytecode.addInsn(BC_IAAND);
             break;
         }
         case tOR: {
-            if (!expressionStartLabel) {
-                assert(!expressionEndLabel);
-                expressionStartLabel = new Label();
-            }
             node->left()->visit(this);
             node->right()->visit(this);
+            bytecode.addInsn(BC_IAOR);
             break;
         }
         case tRANGE: {
@@ -123,7 +84,6 @@ void BytecodeTranslatorVisitor::visitBinaryOpNode(BinaryOpNode *node) {
             exit(42);
             break;
     }
-    //std::cout << "end BinaryOpNode" << std::endl;
 }
 
 void BytecodeTranslatorVisitor::visitUnaryOpNode(UnaryOpNode *node) {
@@ -136,10 +96,8 @@ void BytecodeTranslatorVisitor::visitUnaryOpNode(UnaryOpNode *node) {
             break;
         }
         case tNOT: {
-            bool prevInverse = inverse;
-            inverse = !inverse;
             node->visitChildren(this);
-            inverse = prevInverse;
+            generateNot();
             break;
         }
         default:
@@ -193,7 +151,7 @@ void BytecodeTranslatorVisitor::visitStoreNode(StoreNode *node) {
         bytecode.addInsn(getCast(type, node->var()->type()));
         type = node->var()->type();
     }
-    
+
     switch (node->op()) {
         case tASSIGN:
             generateStoreVarBytecode(node->var()->name(), type);
@@ -279,51 +237,35 @@ void BytecodeTranslatorVisitor::visitForNode(ForNode *node) {
 }
 
 void BytecodeTranslatorVisitor::visitWhileNode(WhileNode *node) {
+
     Label startLabel;
+    Label endLabel;
+
     uint32_t startPosition = bytecode.length();
-    node->whileExpr()->visit(this);
-    Label * localExprStartLabel = expressionStartLabel;
-    expressionStartLabel = nullptr;
-    Label * localExprEndLabel = expressionEndLabel;
-    expressionEndLabel = nullptr;
-    //after expression visit, only one of (expressionStartLabel, expressionEndLabel) is initialized,
-    //depending on type of logical operators within expression (||, &&)
-    if (localExprStartLabel) { // || operators
-        localExprEndLabel = new Label();
-        bytecode.addBranch(BC_JA, *localExprEndLabel);
-        localExprStartLabel->bind(bytecode.length(), &bytecode);
-    }
+    node->whileExpr()->visit(this); // result is on tos as integer
+    bytecode.addInsn(BC_ILOAD1);
+    bytecode.addBranch(BC_IFICMPG, endLabel);
     node->loopBlock()->visit(this);
     bytecode.addBranch(BC_JA, startLabel);
     startLabel.bind(startPosition, &bytecode);
-    localExprEndLabel->bind(bytecode.length(), &bytecode);
-    delete localExprStartLabel;
-    delete localExprEndLabel;
+    endLabel.bind(bytecode.current(), &bytecode);
 }
 
 void BytecodeTranslatorVisitor::visitIfNode(IfNode *node) {
+
+    Label elseLabel;
+    Label endOfElseLabel;
+
     node->ifExpr()->visit(this);
-    Label * localExprStartLabel = expressionStartLabel;
-    expressionStartLabel = nullptr;
-    Label * localExprEndLabel = expressionEndLabel;
-    expressionEndLabel = nullptr;
-    //after expression visit, only one of (expressionStartLabel, expressionEndLabel) is initialized,
-    //depending on type of logical operators within expression (||, &&)
-    if (localExprStartLabel) { // || operators
-        localExprEndLabel = new Label();
-        bytecode.addBranch(BC_JA, *localExprEndLabel);
-        localExprStartLabel->bind(bytecode.length(), &bytecode);
-    }
+    bytecode.addInsn(BC_ILOAD1);
+    bytecode.addBranch(BC_IFICMPG, elseLabel);
     node->thenBlock()->visit(this);
-    Label endOfElseBlockLabel;
-    bytecode.addBranch(BC_JA, endOfElseBlockLabel);
-    localExprEndLabel->bind(bytecode.length(), &bytecode);
+    bytecode.addBranch(BC_JA, endOfElseLabel);
+    elseLabel.bind(bytecode.current(), &bytecode);
     if (node->elseBlock()) {
         node->elseBlock()->visit(this);
     }
-    endOfElseBlockLabel.bind(bytecode.current(), &bytecode);
-    delete localExprStartLabel;
-    delete localExprEndLabel;
+    endOfElseLabel.bind(bytecode.current(), &bytecode);
 }
 
 void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
@@ -479,4 +421,20 @@ void BytecodeTranslatorVisitor::castTOSPair(mathvm::VarType top, mathvm::VarType
     if (top != target) {
         bytecode.addInsn(getCast(top, target));
     }
+}
+
+void BytecodeTranslatorVisitor::generateNot() {
+    bytecode.addInsn(BC_ILOAD1);
+    bytecode.addInsn(BC_IAXOR);
+}
+
+void BytecodeTranslatorVisitor::generateLE(mathvm::AstNode *left, mathvm::AstNode*right) {
+    generateLT(right, left);
+    generateNot();
+}
+
+void BytecodeTranslatorVisitor::generateLT(mathvm::AstNode *left, mathvm::AstNode *right) {
+    right->visit(this);
+    left->visit(this);
+    bytecode.addInsn(BC_ICMP);
 }

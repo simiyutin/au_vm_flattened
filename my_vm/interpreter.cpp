@@ -235,6 +235,10 @@ Status* Interpreter::execute(vector<pVar> &vars) {
                 handleReturn();
                 break;
 
+            case BC_ICMP:
+                handleIcmp();
+                break;
+
             default:
                 size_t length;
                 const char* name = bytecodeName(instruction, &length);

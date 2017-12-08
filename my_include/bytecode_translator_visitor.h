@@ -38,10 +38,6 @@ struct BytecodeTranslatorVisitor : mathvm::AstBaseVisitor {
     FOR_NODES(VISITOR_FUNCTION)
 #undef VISITOR_FUNCTION
 
-    void printBytecode() const {
-        bytecode.dump(std::cout);
-    };
-
     mathvm::Bytecode getBytecode() const {
         return bytecode;
     };
@@ -63,17 +59,6 @@ struct BytecodeTranslatorVisitor : mathvm::AstBaseVisitor {
         }
         return result;
     };
-
-    void handleBinaryLogic(mathvm::Instruction straight, mathvm::Instruction opposite) {
-        if (expressionStartLabel) {
-            bytecode.addBranch(inverse ? opposite : straight, *expressionStartLabel);
-        } else {
-            if (!expressionEndLabel) {
-                expressionEndLabel = new mathvm::Label();
-            }
-            bytecode.addBranch(inverse? straight : opposite, *expressionEndLabel);
-        }
-    }
 
 private:
 
@@ -98,6 +83,10 @@ private:
         typeStack.push_back(commonType);
     };
 
+    void generateNot();
+    void generateLE(mathvm::AstNode * left, mathvm::AstNode * right);
+    void generateLT(mathvm::AstNode * left, mathvm::AstNode * right);
+
 
     std::vector<scope> scopes = {scope{0}};
 
@@ -110,7 +99,4 @@ private:
     std::vector<mathvm::VarType> typeStack;
     int topMostVariablesNum = -1;
     std::vector<std::string> stringConstants = {""};
-    mathvm::Label * expressionEndLabel = nullptr;
-    mathvm::Label * expressionStartLabel = nullptr;
-    bool inverse = false;
 };

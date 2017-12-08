@@ -176,6 +176,13 @@ private:
         int64_t val = std::atoi(stringConstants[string_id].data());
         stack.addTyped(val);
     };
+    
+    void handleIcmp() {
+        int64_t top = stack.getInt64();
+        int64_t bottom = stack.getInt64();
+        int64_t less = top < bottom;
+        stack.addTyped(less);
+    }
 
 //    template <typename T>
 //    void handleStoreVar() {

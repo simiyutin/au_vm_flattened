@@ -17,5 +17,5 @@ s = x;
 s += y;
 print(p, '\n');
 print(s, '\n');
-//print((y < x) * (y >= x), '\n');
-//print((y > x) * (y <= x), '\n');
+print((y < x) * (y >= x), '\n');
+print((y > x) * (y <= x), '\n');

@@ -104,13 +104,16 @@ def main(argv):
     if m is None:
       continue
     t = m.group(1)
-    #fib - 2m17.692s through time
-    #ackermann - 4m23.068s through time
-    #ackermann_closure - 4m18.917s through time
-    slow = ['fib', 'ackermann', 'ackermann_closure', 'complex2']
-    toskip = ['casts', 'function_native']
-    # if t != 'complex2_verbose':
+    #fib - 2m17.692s through time -> 3m40
+    #ackermann - 4m23.068s through time -> 9m20
+    #ackermann_closure - 4m18.917s through time -> 5m40
+    slow = ['fib', 'ackermann', 'ackermann_closure', 'complex2']  # became 2 times slower after boolean expressions
+    # refactored
+    toskip = ['function_native']
+    # print(t)
+    # if t != 'if':
     if t in slow or t in toskip:
+    # if t in toskip:
         continue
     runTest(mvm, testdir, t, options.doublerun)
 
