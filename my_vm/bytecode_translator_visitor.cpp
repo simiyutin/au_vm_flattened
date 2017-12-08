@@ -355,19 +355,7 @@ void BytecodeTranslatorVisitor::visitNativeCallNode(NativeCallNode *node) {
 void BytecodeTranslatorVisitor::visitPrintNode(PrintNode *node) {
     for (int i = 0; i < (int) node->operands(); ++i) {
         node->operandAt(i)->visit(this); //now operand is on TOS
-        switch (typeStack.back()) {
-            case VT_INT:
-                bytecode.addInsn(BC_IPRINT);
-                break;
-            case VT_DOUBLE:
-                bytecode.addInsn(BC_DPRINT);
-                break;
-            case VT_STRING:
-                bytecode.addInsn(BC_SPRINT);
-                break;
-            default:
-                break;
-        }
+        bytecode.addInsn(getPrint(typeStack.back()));
     }
 }
 

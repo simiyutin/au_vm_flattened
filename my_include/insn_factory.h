@@ -221,3 +221,16 @@ inline Instruction getCast(VarType from, VarType to) {
         exit(300);
     }
 }
+
+inline Instruction getPrint(VarType type) {
+    switch (type) {
+        case VT_INT:
+            return BC_IPRINT;
+        case VT_DOUBLE:
+            return BC_DPRINT;
+        case VT_STRING:
+            return BC_SPRINT;
+        default:
+            return BC_INVALID;
+    }
+}
