@@ -87,7 +87,6 @@ void BytecodeTranslatorVisitor::visitBinaryOpNode(BinaryOpNode *node) {
 }
 
 void BytecodeTranslatorVisitor::visitUnaryOpNode(UnaryOpNode *node) {
-    //std::cout << "start UnaryOpNode" << std::endl;
     switch (node->kind()) {
         case tSUB: {
             node->visitChildren(this);
@@ -105,11 +104,9 @@ void BytecodeTranslatorVisitor::visitUnaryOpNode(UnaryOpNode *node) {
             exit(42);
             break;
     }
-    //std::cout << "end BinaryOpNode" << std::endl;
 }
 
 void BytecodeTranslatorVisitor::visitStringLiteralNode(StringLiteralNode *node) {
-    //std::cout << "string literal:" << node->literal() << std::endl;
     bytecode.addInsn(getLoadInsn(VT_STRING));
     stringConstants.push_back(node->literal());
     bytecode.addUInt16(stringConstants.size() - 1);
@@ -117,14 +114,12 @@ void BytecodeTranslatorVisitor::visitStringLiteralNode(StringLiteralNode *node) 
 }
 
 void BytecodeTranslatorVisitor::visitDoubleLiteralNode(DoubleLiteralNode *node) {
-    //std::cout << "double literal:" << node->literal() << std::endl;
     bytecode.addInsn(getLoadInsn(VT_DOUBLE));
     bytecode.addDouble(node->literal());
     typeStack.push_back(VT_DOUBLE);
 }
 
 void BytecodeTranslatorVisitor::visitIntLiteralNode(IntLiteralNode *node) {
-    //std::cout << "int literal:" << node->literal() << std::endl;
     bytecode.addInsn(getLoadInsn(VT_INT));
     bytecode.addInt64(node->literal());
     typeStack.push_back(VT_INT);
@@ -269,8 +264,6 @@ void BytecodeTranslatorVisitor::visitIfNode(IfNode *node) {
 }
 
 void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
-    //std::cout << "start blockNode" << std::endl;
-
     Scope::VarIterator it(node->scope());
 
     while (it.hasNext()) {
@@ -324,39 +317,31 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
             }
         }
     }
-
-    //std::cout << "end blockNode" << std::endl;
 }
 
 void BytecodeTranslatorVisitor::visitFunctionNode(FunctionNode *node) {
-//    std::cout << "start functionNode" << std::endl;
     NativeCallNode * native = checkNative(node);
     if (native) {
         native->visit(this);
     } else {
         node->visitChildren(this);
     }
-//    std::cout << "end functionNode" << std::endl;
 }
 
 void BytecodeTranslatorVisitor::visitReturnNode(ReturnNode *node) {
-//    std::cout << "start returnNode" << std::endl;
     if (node->returnExpr()) {
         node->returnExpr()->visit(this);
     }
     bytecode.addInsn(BC_RETURN);
-//    std::cout << "end returnNode" << std::endl;
 }
 
 void BytecodeTranslatorVisitor::visitCallNode(CallNode *node) {
-//    std::cout << "start callNode" << std::endl;
     for (int i = (int) node->parametersNumber() - 1; i >= 0; --i) {
         node->parameterAt(i)->visit(this);
     }
     bytecode.addInsn(BC_CALL);
     bytecode.addUInt16(functionMap[node->name()]);
     typeStack.push_back(functionTypesMap[node->name()]);
-//    std::cout << "end callNode" << std::endl;
 
 }
 
@@ -368,7 +353,6 @@ void BytecodeTranslatorVisitor::visitNativeCallNode(NativeCallNode *node) {
 }
 
 void BytecodeTranslatorVisitor::visitPrintNode(PrintNode *node) {
-    //std::cout << "start printNode" << std::endl;
     for (int i = 0; i < (int) node->operands(); ++i) {
         node->operandAt(i)->visit(this); //now operand is on TOS
         switch (typeStack.back()) {
@@ -385,7 +369,6 @@ void BytecodeTranslatorVisitor::visitPrintNode(PrintNode *node) {
                 break;
         }
     }
-    //std::cout << "end printNode" << std::endl;
 }
 
 NativeCallNode *BytecodeTranslatorVisitor::checkNative(FunctionNode *node) {
