@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../include/visitors.h"
-#include "../include/mathvm.h"
+#include "includes.h"
 
 #include <sstream>
 

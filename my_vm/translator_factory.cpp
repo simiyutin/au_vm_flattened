@@ -1,11 +1,10 @@
-#include "../include/mathvm.h"
-#include "../my_include/ast_printer_translator.h"
+#include "../my_include/astprinter.h"
 
 namespace mathvm {
 
     Translator* Translator::create(const string& impl) {
         if (impl == "printer") {
-            return new AstPrinterTranslatorImpl();
+            return new AstPrinter();
         }
         if (impl == "" || impl == "intepreter") {
             return new BytecodeTranslatorImpl();

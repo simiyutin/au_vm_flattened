@@ -7,8 +7,8 @@ add_executable(my_repo
         include/ast.h
         include/mathvm.h
         include/visitors.h
-        my_include/ast_printer_translator.h
-        my_include/ast_printer_visitor.h
+        my_include/astprinter.h
+        my_include/astprinter_visitor.h
         my_include/bytecode_translator_visitor.h
         my_include/interpreter.h
         my_include/identity.h
@@ -24,14 +24,15 @@ add_executable(my_repo
         vm/scanner.h
         vm/translator.cpp
         vm/utils.cpp
-        my_vm/ast_printer_translator.cpp
-        my_vm/ast_printer_visitor.cpp
+        my_vm/astprinter.cpp
+        my_vm/astprinter_visitor.cpp
         my_vm/bytecode_translator.cpp
         my_vm/bytecode_translator_visitor.cpp
         my_vm/interpreter.cpp
         main.cpp
         my_vm/translator_factory.cpp
-        my_include/native_caller.h)
+        my_include/native_caller.h
+        my_include/includes.h)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 target_link_libraries(my_repo ${CMAKE_DL_LIBS})
