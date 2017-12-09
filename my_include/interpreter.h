@@ -58,6 +58,10 @@ private:
             return getTyped<uint16_t>();
         }
 
+        double getDouble() {
+            return getTyped<double>();
+        }
+
         template <typename T>
         T getTyped() {
             if (_data.size() < sizeof(T)) {
@@ -182,7 +186,7 @@ private:
     void handleCast(identity<std::string>, identity<int64_t>) {
         uint16_t string_id = stack.getTyped<uint16_t>();
         // bom bom, only int, not int64
-        int64_t val = std::atoi(stringConstants[string_id].data());
+        int64_t val = std::atoi(getString(string_id));
         stack.addTyped(val);
     };
     
@@ -356,7 +360,7 @@ private:
 
     void handlePrint(identity<std::string>) {
         uint16_t id = stack.getTyped<uint16_t>();
-        std::cout << stringConstants[id];
+        std::cout << getString(id);
     }
 
     void handleCmpge() {
@@ -427,7 +431,7 @@ private:
     void handleCallNative() {
         uint16_t function_id = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
-        function_loader.call(function_id, stack, stringConstants);
+        function_loader.call(function_id, stack, stringConstants, dynamicStrings);
     }
 
     void handleReturn() {
@@ -456,10 +460,22 @@ private:
         return registers;
     }
 
+    const char * getString(uint16_t string_id) {
+        if (string_id < stringConstants.size()) {
+            const std::string & constant = stringConstants[string_id];
+            const char * data = constant.c_str();
+            return data;
+        } else {
+            char * data = dynamicStrings[string_id];
+            return data;
+        }
+    }
+
     mathvm::Bytecode bytecode;
     Stack stack;
     std::map<std::string, int> topMostVars;
     std::vector<std::string> stringConstants;
+    std::map<uint16_t, char *> dynamicStrings;
     const std::map<uint16_t , uint32_t> functionOffsets;
     std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> nativeFunctions;
     dynamic_loader function_loader;

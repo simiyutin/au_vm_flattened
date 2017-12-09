@@ -1,4 +1,0 @@
-function int strlen(string s) native 'strlen';
-
-string test = 'hello';
-print(strlen(test));

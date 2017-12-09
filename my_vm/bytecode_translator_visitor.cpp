@@ -282,6 +282,13 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
         const AstFunction * func = fit0.next();
         functionMap[func->name()] = ++globalFunctionCounter;
         functionTypesMap[func->name()] = func->returnType();
+        if (checkNative(func->node())) {
+            std::vector<VarType> signature = {func->returnType()};
+            for (uint32_t i = 0; i < func->parametersNumber(); ++i) {
+                signature.emplace_back(func->parameterType(i));
+            }
+            nativeFunctionMap[functionMap[func->name()]] = {func->name(), signature};
+        }
     }
 
 
@@ -295,17 +302,12 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
         functionOffsetsMap[functionMap[func->name()]] = bytecode.length();
         uint16_t function_id = functionMap[func->name()];
         scopes.emplace_back(function_id);
-        std::vector<VarType> signature = {func->returnType()};
         for (uint32_t i = 0; i < func->parametersNumber(); ++i) {
-            signature.emplace_back(func->parameterType(i));
             auto newVarId = uint16_t(scopes.back().vars.size());
             scopes.back().vars[func->parameterName(i)] = newVarId;
             bytecode.addInsn(getStoreCtxVarInsn(func->parameterType(i)));
             bytecode.addUInt16(function_id);
             bytecode.addUInt16(newVarId);
-        }
-        if (checkNative(func->node())) {
-            nativeFunctionMap[scopes.back().function_id] = {func->name(), signature};
         }
         func->node()->visit(this);
         scopes.pop_back();
@@ -339,6 +341,7 @@ void BytecodeTranslatorVisitor::visitCallNode(CallNode *node) {
     for (int i = (int) node->parametersNumber() - 1; i >= 0; --i) {
         node->parameterAt(i)->visit(this);
     }
+    string name = node->name();
     if (nativeFunctionMap.find(functionMap[node->name()]) != nativeFunctionMap.end()) {
         bytecode.addInsn(BC_CALLNATIVE);
     } else {

@@ -15,7 +15,7 @@ struct dynamic_loader {
     {}
 
     template <typename STACK>
-    void call(uint16_t function_id, STACK & stack, const std::vector<std::string> & constants) {
+    void call(uint16_t function_id, STACK & stack, const std::vector<std::string> & constantStrings, std::map<uint16_t, char *> & dynamicStrings) {
         auto p = nativeFunctions.find(function_id);
         const std::string & function_name = p->second.first;
         const auto & signature = p->second.second;
@@ -29,11 +29,24 @@ struct dynamic_loader {
             auto type = signature[i];
             if (type == mathvm::VT_STRING) {
                 uint16_t string_id = stack.getUInt16();
-                const std::string & constant = constants[string_id];
-                const char * data = constant.c_str();
-                iRegValues[filledInt++] = (uint64_t) data;
+                if (string_id < constantStrings.size()) {
+                    const std::string & constant = constantStrings[string_id];
+                    const char * data = constant.c_str();
+                    iRegValues[filledInt++] = (uint64_t) data;
+                } else {
+                    char * data = dynamicStrings[string_id];
+                    iRegValues[filledInt++] = (uint64_t) data;
+                }
+
             }
-            //todo double and int
+            if (type == mathvm::VT_INT) {
+                int64_t value = stack.getInt64();
+                iRegValues[filledInt++] = (uint64_t) value;
+            }
+            if (type == mathvm::VT_DOUBLE) {
+                double value = stack.getDouble();
+                dRegValues[filledDouble++] = value;
+            }
         }
 
         auto returnType = signature[0];
@@ -47,50 +60,43 @@ struct dynamic_loader {
             if (i == 5) asm("movq %0, %%r9;":: "r" (iRegValues[i]));
         }
 
-        //todo double
+        for (size_t i = 0; i < filledDouble; ++i) {
+            if (i == 0) asm("movq %0, %%xmm0;":: "r" (dRegValues[i]));
+            if (i == 1) asm("movq %0, %%xmm1;":: "r" (dRegValues[i]));
+            if (i == 2) asm("movq %0, %%xmm2;":: "r" (dRegValues[i]));
+            if (i == 3) asm("movq %0, %%xmm3;":: "r" (dRegValues[i]));
+            if (i == 4) asm("movq %0, %%xmm4;":: "r" (dRegValues[i]));
+            if (i == 5) asm("movq %0, %%xmm5;":: "r" (dRegValues[i]));
+        }
 
         if (returnType == mathvm::VT_INT || returnType == mathvm::VT_STRING) {
-            uint64_t result = 0;
+            uint64_t result;
             asm(
                     "callq %1;"
                     "movq %%rax, %0;" : "=r" (result) : "r" (func)
             );
             if (returnType == mathvm::VT_INT) {
-//                std::cout << "function called, int result = " << result << std::endl;
                 stack.addTyped((int64_t) result);
             } else {
-                std::cout << "function called, str result = " << (const char *) result << std::endl;
+                char * strResult = (char *) result;
+                uint16_t string_id = constantStrings.size() + dynamicStrings.size();
+                dynamicStrings[string_id] = strResult;
+                stack.addTyped(string_id);
             }
-        } else {
-            double result = 0;
+        } else if (returnType == mathvm::VT_DOUBLE) {
+            double result;
             asm(
                     "callq %1;"
                     "movq %%xmm0, %0;" : "=r" (result) : "r" (func)
             );
-            std::cout << "function called, double result = " << result << std::endl;
+            stack.addTyped(result);
+        } else {
+            asm("callq %0;" :: "r" (func));
         }
     }
 
 private:
     using signature_t = std::vector<mathvm::VarType>;
-    size_t getSizeOfParameters(const signature_t & signature) {
-        size_t result = 0;
-        for (size_t i = 1; i < signature.size(); ++i) {
-            result += typeSizes.find(signature[i])->second;
-        }
-        return result;
-    }
-
-    const std::map<mathvm::VarType, size_t> typeSizes = {
-            {mathvm::VT_INT, sizeof(int)},
-            {mathvm::VT_DOUBLE, sizeof(double)},
-            {mathvm::VT_STRING, sizeof(char *)},
-            {mathvm::VT_VOID, 0}
-    };
-
-    const std::vector<std::string> intOrPointerRegisters = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
-    const std::vector<std::string> floatingRegisters = {"xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5"};
-
     const std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> nativeFunctions;
     void * handle;
 };

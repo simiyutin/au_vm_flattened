@@ -259,8 +259,8 @@ Status* Interpreter::execute(vector<pVar> &vars) {
                 var->setDoubleValue(getVarMap<double>(0)[topMostVars[var->name()]]);
                 break;
             case VT_STRING: {
-                std::string val = stringConstants[getVarMap<std::string>(0)[topMostVars[var->name()]]];
-                var->setStringValue(val.c_str());
+                const char * val = getString(getVarMap<std::string>(0)[topMostVars[var->name()]]);
+                var->setStringValue(val);
                 break;
             }
             default:
