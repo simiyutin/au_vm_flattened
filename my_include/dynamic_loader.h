@@ -56,7 +56,8 @@ struct dynamic_loader {
                     "movq %%rax, %0;" : "=r" (result) : "r" (func)
             );
             if (returnType == mathvm::VT_INT) {
-                std::cout << "function called, int result = " << result << std::endl;
+//                std::cout << "function called, int result = " << result << std::endl;
+                stack.addTyped((int64_t) result);
             } else {
                 std::cout << "function called, str result = " << (const char *) result << std::endl;
             }
@@ -68,8 +69,6 @@ struct dynamic_loader {
             );
             std::cout << "function called, double result = " << result << std::endl;
         }
-
-        exit(42);
     }
 
 private:

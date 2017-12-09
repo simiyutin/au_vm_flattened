@@ -111,8 +111,8 @@ def main(argv):
     # refactored
     toskip = ['function_native']
     # print(t)
-    # if t != 'if':
-    if t in slow or t in toskip:
+    if t != 'function_native_simple':
+    # if t in slow or t in toskip:
     # if t in toskip:
         continue
     runTest(mvm, testdir, t, options.doublerun)
