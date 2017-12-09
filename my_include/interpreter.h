@@ -234,13 +234,6 @@ private:
         uint16_t varId = bytecode.getUInt16(callStack.back().executionPoint);
         callStack.back().executionPoint += sizeof(uint16_t);
         T val = stack.getTyped<T>();
-//        std::cout << "--store ctx var @"
-//                  << contextId
-//                  << ":"
-//                  << varId
-//                  << ", val="
-//                  << val
-//                  << std::endl;
         getVarMap<T>(contextId)[varId] = val;
     }
 

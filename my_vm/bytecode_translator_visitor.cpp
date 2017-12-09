@@ -109,7 +109,7 @@ void BytecodeTranslatorVisitor::visitUnaryOpNode(UnaryOpNode *node) {
 void BytecodeTranslatorVisitor::visitStringLiteralNode(StringLiteralNode *node) {
     bytecode.addInsn(getLoadInsn(VT_STRING));
     stringConstants.push_back(node->literal());
-    bytecode.addUInt16(stringConstants.size() - 1);
+    bytecode.addUInt16(uint16_t(stringConstants.size() - 1));
     typeStack.push_back(VT_STRING);
 }
 
@@ -268,11 +268,11 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
 
     while (it.hasNext()) {
         const AstVar * var = it.next();
-        size_t var_id = scopes.back().vars.size();
+        auto var_id = (uint16_t) scopes.back().vars.size();
         scopes.back().vars[var->name()] = var_id;
     }
     if (topMostVariablesNum == -1) {
-        topMostVariablesNum = scopes.back().vars.size();
+        topMostVariablesNum = (int) scopes.back().vars.size();
     }
 
     // первый проход: получение имен и возвращаемых типов,
@@ -341,7 +341,6 @@ void BytecodeTranslatorVisitor::visitCallNode(CallNode *node) {
     for (int i = (int) node->parametersNumber() - 1; i >= 0; --i) {
         node->parameterAt(i)->visit(this);
     }
-    string name = node->name();
     if (nativeFunctionMap.find(functionMap[node->name()]) != nativeFunctionMap.end()) {
         bytecode.addInsn(BC_CALLNATIVE);
     } else {
@@ -353,9 +352,7 @@ void BytecodeTranslatorVisitor::visitCallNode(CallNode *node) {
 }
 
 // на самом деле этот метод вызывается не при вызове native функции, а при ее объявлении
-void BytecodeTranslatorVisitor::visitNativeCallNode(NativeCallNode *node) {
-
-}
+void BytecodeTranslatorVisitor::visitNativeCallNode(NativeCallNode *node) {}
 
 void BytecodeTranslatorVisitor::visitPrintNode(PrintNode *node) {
     for (int i = 0; i < (int) node->operands(); ++i) {
@@ -367,7 +364,7 @@ void BytecodeTranslatorVisitor::visitPrintNode(PrintNode *node) {
 NativeCallNode *BytecodeTranslatorVisitor::checkNative(FunctionNode *node) {
     BlockNode * block = node->body();
     AstNode * first_child = block->nodeAt(0);
-    NativeCallNode * native = dynamic_cast<NativeCallNode*>(first_child);
+    auto * native = dynamic_cast<NativeCallNode*>(first_child);
     return native;
 }
 

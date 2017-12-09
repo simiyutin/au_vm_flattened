@@ -21,11 +21,12 @@ struct stack_frame {
         return stringVarMap;
     };
 
-    std::map<int, int64_t> intVarMap;
-    std::map<int, double> doubleVarMap;
-    std::map<int, uint16_t> stringVarMap;
-
     uint32_t executionPoint;
     int64_t function_id;
     int64_t stack_size = 0;
+
+private:
+    std::map<int, int64_t> intVarMap;
+    std::map<int, double> doubleVarMap;
+    std::map<int, uint16_t> stringVarMap;
 };
