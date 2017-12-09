@@ -72,7 +72,7 @@ struct native_caller {
         if (returnType == mathvm::VT_INT || returnType == mathvm::VT_STRING) {
             uint64_t result;
             asm(
-                    "callq %1;"
+                    "callq *%1;"
                     "movq %%rax, %0;" : "=r" (result) : "r" (func)
             );
             if (returnType == mathvm::VT_INT) {
@@ -86,12 +86,12 @@ struct native_caller {
         } else if (returnType == mathvm::VT_DOUBLE) {
             double result;
             asm(
-                    "callq %1;"
+                    "callq *%1;"
                     "movq %%xmm0, %0;" : "=r" (result) : "r" (func)
             );
             stack.addTyped(result);
         } else {
-            asm("callq %0;" :: "r" (func));
+            asm("callq *%0;" :: "r" (func));
         }
     }
 
