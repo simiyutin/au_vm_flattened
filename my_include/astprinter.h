@@ -2,13 +2,13 @@
 
 #include "includes.h"
 
-using namespace mathvm;
+namespace mathvm {
+    struct AstPrinter: Translator {
 
-struct AstPrinter: Translator {
+        AstPrinter();
 
-    AstPrinter();
+        Status *translate(const string &program, Code **code) override;
 
-    Status *translate(const string &program, Code **code) override;
-
-    virtual ~AstPrinter() override;
-};
+        virtual ~AstPrinter() override;
+    };
+}

@@ -1,5 +1,5 @@
 #include "../my_include/bytecode_translator_visitor.h"
-#include "../my_include/insn_factory.h"
+#include "../my_include/instruction_factory.h"
 #include <fstream>
 
 using namespace mathvm;

@@ -4,7 +4,6 @@
 
 #include <sstream>
 #include <map>
-#include "scope.h"
 
 namespace detail {
     inline mathvm::VarType getCommonType(mathvm::VarType t1, mathvm::VarType t2) {
@@ -25,7 +24,7 @@ namespace detail {
             return it->second;
         }
         std::cout << "TRANSLATOR ERROR: INCOMPATIBLE TYPES:" << t1 << "," << t2 << std::endl;
-        exit(300);
+        exit(42);
     }
 }
 
@@ -65,6 +64,13 @@ struct BytecodeTranslatorVisitor : mathvm::AstBaseVisitor {
 
 private:
 
+    struct scope {
+        scope(uint16_t function_id) : function_id(function_id) {}
+
+        std::map<std::string, uint16_t> vars;
+        const uint16_t function_id;
+    };
+
     mathvm::NativeCallNode * checkNative(mathvm::FunctionNode *node);
     std::pair<uint16_t, uint16_t> findVar(const std::string & varName);
     void generateStoreVarBytecode(const std::string & name, mathvm::VarType type);
@@ -93,7 +99,7 @@ private:
 
     std::vector<scope> scopes = {scope{0}};
 
-    std::map<std::string, uint16_t > functionMap;
+    std::map<std::string, uint16_t> functionMap;
     std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> nativeFunctionMap;
     std::map<uint16_t, std::vector<mathvm::VarType>> functionSignatures;
     std::map<uint16_t, uint32_t> functionOffsetsMap;
@@ -102,5 +108,5 @@ private:
     mathvm::Bytecode bytecode;
     std::vector<mathvm::VarType> typeStack;
     int topMostVariablesNum = -1;
-    std::vector<std::string> stringConstants = {""};
+    std::vector<std::string> stringConstants;
 };

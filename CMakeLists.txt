@@ -12,8 +12,7 @@ add_executable(my_repo
         my_include/bytecode_translator_visitor.h
         my_include/interpreter.h
         my_include/identity.h
-        my_include/insn_factory.h
-        my_include/scope.h
+        my_include/instruction_factory.h
         my_include/stack_frame.h
         vm/ast.cpp
         vm/interpreter.cpp
@@ -32,7 +31,8 @@ add_executable(my_repo
         main.cpp
         my_vm/translator_factory.cpp
         my_include/native_caller.h
-        my_include/includes.h)
+        my_include/includes.h
+        my_include/stack.h my_vm/native_caller.cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 target_link_libraries(my_repo ${CMAKE_DL_LIBS})

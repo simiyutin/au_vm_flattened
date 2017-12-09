@@ -5,6 +5,7 @@
 #include "stack_frame.h"
 #include "identity.h"
 #include "native_caller.h"
+#include "stack.h"
 #include <dlfcn.h>
 
 namespace detail {
@@ -50,34 +51,6 @@ struct Interpreter : mathvm::Code {
     void disassemble(std::ostream& out = std::cout, mathvm::FunctionFilter* filter = 0) override;
 
 private:
-    struct Stack : mathvm::Bytecode {
-        int64_t getInt64() {
-            return getTyped<int64_t>();
-        }
-        uint16_t getUInt16() {
-            return getTyped<uint16_t>();
-        }
-
-        double getDouble() {
-            return getTyped<double>();
-        }
-
-        template <typename T>
-        T getTyped() {
-            if (_data.size() < sizeof(T)) {
-                std::cout << "stack has less bytes than needed for requested type" << std::endl;
-                std::cout << "cur stack size: " << _data.size() << std::endl;
-                std::cout << "needed: " << sizeof(T) << std::endl;
-                exit(42);
-            }
-
-            T result = mathvm::Bytecode::getTyped<T>(_data.size() - sizeof(T));
-            for (size_t i = 0; i < sizeof(T); ++i) {
-                _data.pop_back();
-            }
-            return result;
-        }
-    };
 
     template<typename T>
     void handleLoad() {
@@ -296,7 +269,7 @@ private:
 //        auto it = varMap.find(varId);
 //        if (it == varMap.end()) {
 //            std::cout << callStack.back().executionPoint << ": ERROR: no such variable found: id = " << varId << std::endl;
-//            exit(300);
+//            exit(42);
 //        }
 //        T val = it->second;
 //        stack.addTyped(val);
@@ -309,7 +282,7 @@ private:
 //        auto it = varMap.find(varId);
 //        if (it == varMap.end()) {
 //            std::cout << callStack.back().executionPoint <<  ": ERROR: no such variable found: id = " << varId << std::endl;
-//            exit(300);
+//            exit(42);
 //        }
 //        uint16_t stringId = it->second;
 //        stack.addUInt16(stringId);
@@ -423,7 +396,7 @@ private:
         if (new_stack_size - old_stack_size > (int) sizeof(int64_t)) {
             std::cout << "STACK SANITIZER ERROR: BEFORE: " << old_stack_size << " AFTER: " << new_stack_size
                       << std::endl;
-            exit(300);
+            exit(42);
         }
     }
 
@@ -451,7 +424,7 @@ private:
     }
 
     mathvm::Bytecode bytecode;
-    Stack stack;
+    mathvm::Stack stack;
     std::map<std::string, int> topMostVars;
     std::vector<std::string> stringConstants;
     std::map<uint16_t, char *> dynamicStrings;
