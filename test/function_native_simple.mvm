@@ -1,0 +1,4 @@
+function int strlen(string s) native 'strlen';
+
+string test = 'hellllllllllllo';
+strlen(test);

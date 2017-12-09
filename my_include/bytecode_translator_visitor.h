@@ -50,6 +50,10 @@ struct BytecodeTranslatorVisitor : mathvm::AstBaseVisitor {
         return functionOffsetsMap;
     };
 
+    std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> getNativeFunctions() const {
+        return nativeFunctionMap;
+    };
+
     std::map<std::string, int> getTopMostVars() {
         std::map<std::string, int> result;
         for (auto p : scopes[0].vars) {
@@ -91,6 +95,7 @@ private:
     std::vector<scope> scopes = {scope{0}};
 
     std::map<std::string, uint16_t > functionMap;
+    std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> nativeFunctionMap;
     std::map<std::string, mathvm::VarType> functionTypesMap;
     std::map<uint16_t, uint32_t> functionOffsetsMap;
     uint16_t globalFunctionCounter = 0;

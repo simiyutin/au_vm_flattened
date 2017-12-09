@@ -231,6 +231,9 @@ Status* Interpreter::execute(vector<pVar> &vars) {
             case BC_CALL:
                 handleCall();
                 break;
+            case BC_CALLNATIVE:
+                handleCallNative();
+                break;
             case BC_RETURN:
                 handleReturn();
                 break;

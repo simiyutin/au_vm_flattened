@@ -4,6 +4,8 @@
 #include <map>
 #include "stack_frame.h"
 #include "identity.h"
+#include "dynamic_loader.h"
+#include <dlfcn.h>
 
 namespace detail {
     template <typename T>
@@ -30,11 +32,15 @@ struct Interpreter : mathvm::Code {
     Interpreter(const mathvm::Bytecode & bytecode,
              const std::map<std::string, int> & topMostVars,
              const std::vector<std::string> & stringConstants,
-             const std::map<uint16_t, uint32_t> & functionOffsets) :
+             const std::map<uint16_t, uint32_t> & functionOffsets,
+             const std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> & nativeFunctions
+    ) :
             bytecode(bytecode),
             topMostVars(topMostVars),
             stringConstants(stringConstants),
             functionOffsets(functionOffsets),
+            nativeFunctions(nativeFunctions),
+            function_loader(nativeFunctions),
             call_stack({stack_frame(0, 0)}),
             contexts({{0, {0}}})
     {}
@@ -47,6 +53,9 @@ private:
     struct Stack : mathvm::Bytecode {
         int64_t getInt64() {
             return getTyped<int64_t>();
+        }
+        uint16_t getUInt16() {
+            return getTyped<uint16_t>();
         }
 
         template <typename T>
@@ -407,7 +416,6 @@ private:
     }
     
     void handleCall() {
-//        std::cout << "--call: depth=" << call_stack.size() << std::endl;
         uint16_t function_id = bytecode.getUInt16(call_stack.back().executionPoint);
         call_stack.back().executionPoint += sizeof(uint16_t);
         call_stack.back().stack_size = stack.length();
@@ -416,8 +424,13 @@ private:
         call_stack.push_back(stack_frame(new_execution_point, int64_t(function_id)));
     }
 
+    void handleCallNative() {
+        uint16_t function_id = bytecode.getUInt16(call_stack.back().executionPoint);
+        call_stack.back().executionPoint += sizeof(uint16_t);
+        function_loader.call(function_id, stack, stringConstants);
+    }
+
     void handleReturn() {
-//        std::cout << "--return" << std::endl;
         int64_t function_id = call_stack.back().function_id;
         contexts[function_id].pop_back();
         call_stack.pop_back();
@@ -448,6 +461,8 @@ private:
     std::map<std::string, int> topMostVars;
     std::vector<std::string> stringConstants;
     const std::map<uint16_t , uint32_t> functionOffsets;
+    std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> nativeFunctions;
+    dynamic_loader function_loader;
     std::vector<stack_frame> call_stack;
     std::map<uint16_t, std::vector<size_t>> contexts;
 };

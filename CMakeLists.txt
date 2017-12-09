@@ -30,4 +30,8 @@ add_executable(my_repo
         my_vm/bytecode_translator_visitor.cpp
         my_vm/interpreter.cpp
         main.cpp
-        my_vm/translator_factory.cpp)
+        my_vm/translator_factory.cpp
+        my_include/dynamic_loader.h)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+target_link_libraries(my_repo ${CMAKE_DL_LIBS})
