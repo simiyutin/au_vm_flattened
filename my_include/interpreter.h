@@ -457,7 +457,7 @@ private:
     std::map<uint16_t, char *> dynamicStrings;
     const std::map<uint16_t , uint32_t> functionOffsets;
     std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> nativeFunctions;
-    native_caller nativeCaller;
+    mathvm::native_caller nativeCaller;
     std::vector<stack_frame> callStack;
     std::map<uint16_t, std::vector<size_t>> contexts;
 };
