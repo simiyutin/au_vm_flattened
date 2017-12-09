@@ -8,8 +8,8 @@
 #include <cstring>
 #include <sstream>
 
-struct dynamic_loader {
-    dynamic_loader(const std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> & nativeFunctions) :
+struct native_caller {
+    native_caller(const std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> & nativeFunctions) :
             nativeFunctions(nativeFunctions),
             handle(dlopen("libc", RTLD_LAZY))
     {}

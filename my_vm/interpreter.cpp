@@ -24,8 +24,8 @@ Status* Interpreter::execute(vector<pVar> &vars) {
         }
     }
 
-    while (call_stack.back().executionPoint < bytecode.length()) {
-        Instruction instruction = bytecode.getInsn(call_stack.back().executionPoint++);
+    while (callStack.back().executionPoint < bytecode.length()) {
+        Instruction instruction = bytecode.getInsn(callStack.back().executionPoint++);
         switch (instruction) {
 
             case BC_ILOAD:

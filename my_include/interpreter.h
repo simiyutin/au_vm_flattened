@@ -4,7 +4,7 @@
 #include <map>
 #include "stack_frame.h"
 #include "identity.h"
-#include "dynamic_loader.h"
+#include "native_caller.h"
 #include <dlfcn.h>
 
 namespace detail {
@@ -40,8 +40,8 @@ struct Interpreter : mathvm::Code {
             stringConstants(stringConstants),
             functionOffsets(functionOffsets),
             nativeFunctions(nativeFunctions),
-            function_loader(nativeFunctions),
-            call_stack({stack_frame(0, 0)}),
+            nativeCaller(nativeFunctions),
+            callStack({stack_frame(0, 0)}),
             contexts({{0, {0}}})
     {}
 
@@ -86,14 +86,14 @@ private:
 
     template <typename T>
     void handleLoad(identity<T>) {
-        T val = bytecode.getTyped<T>(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(T);
+        T val = bytecode.getTyped<T>(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(T);
         stack.addTyped(val);
     }
 
     void handleLoad(identity<std::string>) {
-        uint16_t stringTableIndex = bytecode.getInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
+        uint16_t stringTableIndex = bytecode.getInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
         stack.addUInt16(stringTableIndex);
     }
 
@@ -204,8 +204,8 @@ private:
 //
 //    template <typename T>
 //    void handleStoreVar(identity<T>) {
-//        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
-//        call_stack.back().executionPoint += sizeof(uint16_t);
+//        uint16_t varId = bytecode.getUInt16(callStack.back().executionPoint);
+//        callStack.back().executionPoint += sizeof(uint16_t);
 //        T val = stack.getTyped<T>();
 ////        std::cout << "--store ctx var @"
 ////                  << varId
@@ -216,8 +216,8 @@ private:
 //    }
 //
 //    void handleStoreVar(identity<std::string>) {
-//        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
-//        call_stack.back().executionPoint += sizeof(uint16_t);
+//        uint16_t varId = bytecode.getUInt16(callStack.back().executionPoint);
+//        callStack.back().executionPoint += sizeof(uint16_t);
 //        uint16_t stringId = stack.getTyped<uint16_t>();
 //        getVarMap<std::string>()[varId] = stringId;
 //    }
@@ -229,10 +229,10 @@ private:
 
     template <typename T>
     void handleStoreCtxVar(identity<T>) {
-        uint16_t contextId = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
+        uint16_t contextId = bytecode.getUInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
+        uint16_t varId = bytecode.getUInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
         T val = stack.getTyped<T>();
 //        std::cout << "--store ctx var @"
 //                  << contextId
@@ -245,10 +245,10 @@ private:
     }
 
     void handleStoreCtxVar(identity<std::string>) {
-        uint16_t contextId = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
+        uint16_t contextId = bytecode.getUInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
+        uint16_t varId = bytecode.getUInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
         uint16_t stringId = stack.getTyped<uint16_t>();
         getVarMap<std::string>(contextId)[varId] = stringId;
     }
@@ -297,12 +297,12 @@ private:
 //
 //    template <typename T>
 //    void handleLoadVar(identity<T>) {
-//        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
-//        call_stack.back().executionPoint += sizeof(uint16_t);
+//        uint16_t varId = bytecode.getUInt16(callStack.back().executionPoint);
+//        callStack.back().executionPoint += sizeof(uint16_t);
 //        auto& varMap = getVarMap<T>();
 //        auto it = varMap.find(varId);
 //        if (it == varMap.end()) {
-//            std::cout << call_stack.back().executionPoint << ": ERROR: no such variable found: id = " << varId << std::endl;
+//            std::cout << callStack.back().executionPoint << ": ERROR: no such variable found: id = " << varId << std::endl;
 //            exit(300);
 //        }
 //        T val = it->second;
@@ -310,12 +310,12 @@ private:
 //    }
 //
 //    void handleLoadVar(identity<std::string>) {
-//        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
-//        call_stack.back().executionPoint += sizeof(uint16_t);
+//        uint16_t varId = bytecode.getUInt16(callStack.back().executionPoint);
+//        callStack.back().executionPoint += sizeof(uint16_t);
 //        auto & varMap = getVarMap<std::string>();
 //        auto it = varMap.find(varId);
 //        if (it == varMap.end()) {
-//            std::cout << call_stack.back().executionPoint <<  ": ERROR: no such variable found: id = " << varId << std::endl;
+//            std::cout << callStack.back().executionPoint <<  ": ERROR: no such variable found: id = " << varId << std::endl;
 //            exit(300);
 //        }
 //        uint16_t stringId = it->second;
@@ -324,27 +324,13 @@ private:
 
     template <typename T>
     void handleLoadCtxVar() {
+        uint16_t contextId = bytecode.getUInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
+        uint16_t varId = bytecode.getUInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
         // переменная неявно инициализируется дефолтным значением, см. вызов bar в тесте complex
-        handleLoadCtxVar(identity<T>());
-    }
-
-    template <typename T>
-    void handleLoadCtxVar(identity<T>) {
-        uint16_t contextId = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
-        T val = getVarMap<T>(contextId)[varId];
+        typename detail::image<T>::type val = getVarMap<T>(contextId)[varId];
         stack.addTyped(val);
-    }
-
-    void handleLoadCtxVar(identity<std::string>) {
-        uint16_t contextId = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t varId = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
-        uint16_t stringId = getVarMap<std::string>(contextId)[varId];
-        stack.addUInt16(stringId);
     }
 
     template <typename T>
@@ -389,20 +375,20 @@ private:
 
     template <typename FUNCTOR>
     void handleConditionalJump(const FUNCTOR & f) {
-        int16_t shift = bytecode.getInt16(call_stack.back().executionPoint);
+        int16_t shift = bytecode.getInt16(callStack.back().executionPoint);
 
         int64_t upper = stack.getTyped<int64_t>();
         int64_t lower = stack.getTyped<int64_t>();
         if (f(upper, lower)) {
-            call_stack.back().executionPoint += shift;
+            callStack.back().executionPoint += shift;
         } else {
-            call_stack.back().executionPoint += sizeof(int16_t);
+            callStack.back().executionPoint += sizeof(int16_t);
         }
     }
 
     void handleJa() {
-        int16_t shift = bytecode.getInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += shift;
+        int16_t shift = bytecode.getInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += shift;
     }
 
     //assume swapping integers
@@ -420,27 +406,27 @@ private:
     }
     
     void handleCall() {
-        uint16_t function_id = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
-        call_stack.back().stack_size = stack.length();
-        contexts[function_id].push_back(call_stack.size());
+        uint16_t function_id = bytecode.getUInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
+        callStack.back().stack_size = stack.length();
+        contexts[function_id].push_back(callStack.size());
         uint32_t new_execution_point = functionOffsets.find(function_id)->second;
-        call_stack.push_back(stack_frame(new_execution_point, int64_t(function_id)));
+        callStack.push_back(stack_frame(new_execution_point, int64_t(function_id)));
     }
 
     void handleCallNative() {
-        uint16_t function_id = bytecode.getUInt16(call_stack.back().executionPoint);
-        call_stack.back().executionPoint += sizeof(uint16_t);
-        function_loader.call(function_id, stack, stringConstants, dynamicStrings);
+        uint16_t function_id = bytecode.getUInt16(callStack.back().executionPoint);
+        callStack.back().executionPoint += sizeof(uint16_t);
+        nativeCaller.call(function_id, stack, stringConstants, dynamicStrings);
     }
 
     void handleReturn() {
-        int64_t function_id = call_stack.back().function_id;
+        int64_t function_id = callStack.back().function_id;
         contexts[function_id].pop_back();
-        call_stack.pop_back();
+        callStack.pop_back();
 
         int64_t new_stack_size = stack.length();
-        int64_t old_stack_size = call_stack.back().stack_size;
+        int64_t old_stack_size = callStack.back().stack_size;
         if (new_stack_size - old_stack_size > (int) sizeof(int64_t)) {
             std::cout << "STACK SANITIZER ERROR: BEFORE: " << old_stack_size << " AFTER: " << new_stack_size
                       << std::endl;
@@ -451,7 +437,7 @@ private:
     template <typename T>
     std::map<int, typename detail::image<T>::type> & getVarMap(uint16_t context) {
         size_t stackframe_id = contexts[context].back();
-        return call_stack[stackframe_id].getVarMap(identity<T>());
+        return callStack[stackframe_id].getVarMap(identity<T>());
     };
 
     template <typename T>
@@ -478,7 +464,7 @@ private:
     std::map<uint16_t, char *> dynamicStrings;
     const std::map<uint16_t , uint32_t> functionOffsets;
     std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> nativeFunctions;
-    dynamic_loader function_loader;
-    std::vector<stack_frame> call_stack;
+    native_caller nativeCaller;
+    std::vector<stack_frame> callStack;
     std::map<uint16_t, std::vector<size_t>> contexts;
 };
