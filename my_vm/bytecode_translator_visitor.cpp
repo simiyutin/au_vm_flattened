@@ -281,12 +281,12 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
     while (fit0.hasNext()) {
         const AstFunction * func = fit0.next();
         functionMap[func->name()] = ++globalFunctionCounter;
-        functionTypesMap[func->name()] = func->returnType();
+        std::vector<VarType> signature = {func->returnType()};
+        for (uint32_t i = 0; i < func->parametersNumber(); ++i) {
+            signature.emplace_back(func->parameterType(i));
+        }
+        functionSignatures[functionMap[func->name()]] = signature;
         if (checkNative(func->node())) {
-            std::vector<VarType> signature = {func->returnType()};
-            for (uint32_t i = 0; i < func->parametersNumber(); ++i) {
-                signature.emplace_back(func->parameterType(i));
-            }
             nativeFunctionMap[functionMap[func->name()]] = {func->name(), signature};
         }
     }
@@ -318,7 +318,7 @@ void BytecodeTranslatorVisitor::visitBlockNode(BlockNode *node) {
         AstNode * child = node->nodeAt(i);
         child->visit(this);
         if (child->isCallNode()) {
-            VarType returnType = functionTypesMap[child->asCallNode()->name()];
+            VarType returnType = functionSignatures[functionMap[child->asCallNode()->name()]][0];
             if (returnType != VT_VOID) {
                 consumeTOS(returnType);
             }
@@ -333,13 +333,21 @@ void BytecodeTranslatorVisitor::visitFunctionNode(FunctionNode *node) {
 void BytecodeTranslatorVisitor::visitReturnNode(ReturnNode *node) {
     if (node->returnExpr()) {
         node->returnExpr()->visit(this);
+        auto returnType = functionSignatures[scopes.back().function_id][0];
+        if (typeStack.back() != returnType) {
+            bytecode.addInsn(getCast(typeStack.back(), returnType));
+        }
     }
     bytecode.addInsn(BC_RETURN);
 }
 
 void BytecodeTranslatorVisitor::visitCallNode(CallNode *node) {
+    const auto & signature = functionSignatures[functionMap[node->name()]];
     for (int i = (int) node->parametersNumber() - 1; i >= 0; --i) {
         node->parameterAt(i)->visit(this);
+        if (typeStack.back() != signature[i + 1]) {
+            bytecode.addInsn(getCast(typeStack.back(), signature[i + 1]));
+        }
     }
     if (nativeFunctionMap.find(functionMap[node->name()]) != nativeFunctionMap.end()) {
         bytecode.addInsn(BC_CALLNATIVE);
@@ -347,7 +355,7 @@ void BytecodeTranslatorVisitor::visitCallNode(CallNode *node) {
         bytecode.addInsn(BC_CALL);
     }
     bytecode.addUInt16(functionMap[node->name()]);
-    typeStack.push_back(functionTypesMap[node->name()]);
+    typeStack.push_back(functionSignatures[functionMap[node->name()]][0]);
 
 }
 

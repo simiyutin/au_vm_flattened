@@ -108,7 +108,7 @@ def main(argv):
     #ackermann - 4m23.068s through time -> 9m20
     #ackermann_closure - 4m18.917s through time -> 5m40
     slow = ['fib', 'ackermann', 'ackermann_closure', 'complex2']  # became 2 times slower after boolean expressions
-    # if t != 'function_native':
+    # if t != 'function-cast':
     if t in slow:
         continue
     runTest(mvm, testdir, t, options.doublerun)

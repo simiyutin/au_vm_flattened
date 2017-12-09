@@ -96,7 +96,7 @@ private:
 
     std::map<std::string, uint16_t > functionMap;
     std::map<uint16_t, std::pair<std::string, std::vector<mathvm::VarType>>> nativeFunctionMap;
-    std::map<std::string, mathvm::VarType> functionTypesMap;
+    std::map<uint16_t, std::vector<mathvm::VarType>> functionSignatures;
     std::map<uint16_t, uint32_t> functionOffsetsMap;
     uint16_t globalFunctionCounter = 0;
 
